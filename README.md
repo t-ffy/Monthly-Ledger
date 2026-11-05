@@ -55,9 +55,30 @@ Then open <http://localhost:8000>. Opening `index.html` directly from disk also 
 | --- | --- |
 | `index.html` | The whole app: markup, styles and script |
 | `manifest.webmanifest` | App name, icons and colours used when installing |
-| `sw.js` | Service worker that caches the app for offline use |
+| `sw.js` | Service worker that caches the app for offline use and installs updates |
+| `version.json` | Current version number and release note shown in the update prompt |
+| `scripts/release.py` | Stamps a new version into `sw.js` and `version.json` |
 | `icons/` | App icons (SVG sources and PNG exports) |
 
-## Updating
+## Updates
 
-After changing `index.html` or any other file the app caches, bump `VERSION` in `sw.js` (for example `ledger-v2`) so installed copies pick up the new version.
+Each time the app opens with an internet connection (and whenever the connection comes back, or after it has been in the background for 30 minutes), it checks the published site for a newer version. With no connection it skips the check and runs from its offline copy as usual.
+
+- **In a browser tab**, a new version is applied automatically and the page reloads. If someone is typing into a form at that moment, the update waits until they leave or reopen the page, so nothing they typed is lost.
+- **In an installed copy** (added to the home screen or installed from the browser), a prompt shows the new version number and what changed, with **Update now** and **Later**. Choosing **Later** asks again the next time the app opens.
+- Updates never touch saved data: entries, budgets and goals stay on the device.
+- The running version is shown at the bottom of the sidebar on wider screens.
+
+### Publishing an update
+
+1. Make your changes.
+2. Stamp a new version number and a one-line description of what changed:
+
+   ```bash
+   python3 scripts/release.py 1.2.0 "Adds export to CSV."
+   ```
+
+   This updates `VERSION` in `sw.js` and the details in `version.json`, which is what the update prompt shows. Without Python, edit those two files by hand and keep the version numbers identical.
+3. Commit and push to `main`. GitHub Pages republishes the site within a few minutes, and each device picks up the update the next time it opens online.
+
+Changes pushed without a new version number are not delivered to devices that already have the app, because they keep running their offline copy.
