@@ -4,7 +4,7 @@
 //   (run `python3 scripts/release.py <version> "<notes>"`). The browser notices the
 //   changed file, downloads the new version in the background and waits; the page
 //   then decides whether to switch over straight away or ask first.
-const VERSION = "1.1.0";
+const VERSION = "1.2.0";
 const SHELL_CACHE = "ledger-shell-" + VERSION;
 const FONT_CACHE = "ledger-fonts";
 const SHELL = [

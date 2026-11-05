@@ -441,7 +441,7 @@ function startLocal(reason){
   state.mode="local";
   let saved=null;try{saved=JSON.parse(localStorage.getItem(LOCAL_KEY)||"null")}catch(e){}
   if(saved){state.entries=saved.entries||[];state.goals=saved.goals||[];state.contribs=saved.contribs||[];state.budgets=saved.budgets||{};state.currency=saved.currency||"USD"}
-  else{state.entries=exampleEntries();state.budgets={...EXAMPLE_BUDGETS}}
+  else{state.entries=[];state.budgets={};state.goals=[];state.contribs=[];saveLocal()} // new device: start with a clean slate
   setSync(true,reason||"Saved on this device");
   render();
 }

@@ -47,7 +47,7 @@ Then open <http://localhost:8000>. Opening `index.html` directly from disk also 
 - Entries, budgets, goals and your currency are saved in the browser's `localStorage` under the key `monthly-ledger-v1`.
 - Data is separate for each device, and for each browser on that device. People sharing one device and browser share one ledger.
 - The app asks the browser to keep its storage persistent, but **clearing your browser's site data deletes your ledger**, and so does uninstalling the app on some phones.
-- The first time the app opens on a device, it shows a sample month marked as examples. Use **Clear examples** to remove it.
+- The first time the app opens on a device, the ledger is empty. To explore with made-up data first, use **Load sample month** on the empty dashboard; those entries are marked as examples and **Clear examples** removes them.
 
 ## Project structure
 
