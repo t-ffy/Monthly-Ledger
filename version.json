@@ -1,4 +1,4 @@
 {
-  "version": "1.2.0",
-  "notes": "New devices now start with an empty ledger instead of sample data."
+  "version": "1.2.1",
+  "notes": "The app now offers its own Install button, with step-by-step instructions on iPhone and iPad."
 }

@@ -275,6 +275,14 @@ form.contrib{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,160px) au
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;font-weight:500;z-index:30;box-shadow:0 8px 24px rgba(0,0,0,.2);max-width:calc(100vw - 32px);animation:toast-in .22s var(--ease)}
 @keyframes toast-in{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
 
+/* ---- install offer ---- */
+.install-wrap{margin-bottom:20px}
+.install-banner .install-actions{display:flex;gap:8px;flex-wrap:wrap}
+.install-banner .btn{padding:8px 16px;font-size:13.5px}
+.install-side{display:flex;align-items:center;gap:8px;margin-top:6px;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:var(--rail-hover);color:var(--rail-hi);font-weight:600;font-size:13px;cursor:pointer;transition:background-color .15s}
+.install-side:hover{background:var(--accent);color:var(--on-accent);border-color:transparent}
+.install-side svg{width:16px;height:16px}
+
 /* ---- update prompt ---- */
 .ver{font-size:11.5px;opacity:.75;margin-top:2px}
 .update{position:fixed;z-index:40;right:max(20px,env(safe-area-inset-right,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));width:min(420px,calc(100vw - 32px));
@@ -379,11 +387,20 @@ form.contrib{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,160px) au
         <option value="INR">INR ₹</option><option value="CAD">CAD $</option><option value="AUD">AUD $</option><option value="JPY">JPY ¥</option>
       </select>
       <div class="sync"><span class="dot" id="syncDot"></span><span id="syncText">Connecting…</span></div>
+      <button class="install-side" id="installSide" type="button" hidden><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3v9M6 8.5 10 12.5 14 8.5"/><path d="M4 15.5h12"/></svg>Install app</button>
       <div class="ver" id="appVersion"></div>
     </div>
   </aside>
 
-  <main class="main"><div class="wrap" id="view"></div></main>
+  <main class="main">
+    <div class="wrap install-wrap" id="installWrap" hidden>
+      <div class="banner install-banner" role="region" aria-label="Install the app">
+        <p id="installText"></p>
+        <div class="install-actions"><button class="btn ghost" id="installDismiss" type="button">Not now</button><button class="btn" id="installNow" type="button">Install</button></div>
+      </div>
+    </div>
+    <div class="wrap" id="view"></div>
+  </main>
 </div>
 <div class="toast" id="toast" hidden></div>
 <div class="update" id="updateBar" role="dialog" aria-labelledby="updateTitle" hidden>
@@ -776,6 +793,36 @@ connect();
 })();
 </script>
 <script>
+/* ---------- install offer ----------
+   Chrome, Edge and Android announce when the app can be installed (beforeinstallprompt);
+   the app then offers its own Install button. iPhone and iPad have no such event, so they get instructions. */
+(function(){
+  const standalone=navigator.standalone===true||["standalone","minimal-ui","fullscreen","window-controls-overlay"].some(m=>matchMedia("(display-mode: "+m+")").matches);
+  if(standalone||location.protocol==="file:")return;
+  const wrap=document.getElementById("installWrap"),text=document.getElementById("installText"),
+        now=document.getElementById("installNow"),later=document.getElementById("installDismiss"),side=document.getElementById("installSide");
+  const KEY="monthly-ledger-install-dismissed";
+  let dismissed=false;try{dismissed=localStorage.getItem(KEY)==="1"}catch(e){}
+  let deferred=null;
+  const ios=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+  function show(msg,canInstall){text.innerHTML=msg;now.hidden=!canInstall;later.textContent=canInstall?"Not now":"Got it";wrap.hidden=false}
+  function hide(){wrap.hidden=true}
+  later.onclick=()=>{hide();try{localStorage.setItem(KEY,"1")}catch(e){}};
+  async function install(){
+    if(!deferred)return;
+    const e=deferred;deferred=null;
+    e.prompt();
+    try{const r=await e.userChoice;if(r&&r.outcome==="accepted"){hide();side.hidden=true}}catch(x){}
+  }
+  now.onclick=install;side.onclick=install;
+  window.addEventListener("beforeinstallprompt",e=>{
+    e.preventDefault();deferred=e;side.hidden=false;
+    if(!dismissed)show("<b>Install Monthly Ledger</b> on this device to open it from your home screen or desktop and use it offline.",true);
+  });
+  window.addEventListener("appinstalled",()=>{hide();side.hidden=true;deferred=null});
+  if(ios&&!dismissed)show("<b>Install Monthly Ledger:</b> tap the Share button, then <b>Add to Home Screen</b>. In Chrome, Share is at the top right of the address bar; in Safari, it's at the bottom.",false);
+})();
+
 /* ---------- updates ----------
    Opened with a connection: ask the server (GitHub Pages, published from the repository) for a newer version.
    In a browser tab, a new version is applied straight away. In an installed copy, the person is asked first.

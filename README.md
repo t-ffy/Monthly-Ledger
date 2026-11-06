@@ -28,9 +28,13 @@ Share that link with anyone who should use the app. Each person's data stays on 
 
 ### Install it like an app
 
-- **Android (Chrome)**: open the link, tap the menu, then **Install app** or **Add to Home screen**.
-- **iPhone/iPad (Safari)**: open the link, tap **Share**, then **Add to Home Screen**.
-- **Desktop (Chrome or Edge)**: open the link and click the install icon in the address bar.
+When the browser allows it, the app offers an **Install** button itself: a banner at the top of the page and, on wider screens, an **Install app** button in the sidebar. On iPhone and iPad it shows the steps instead. You can also install from the browser:
+
+- **Android (Chrome)**: tap the menu (⋮), then **Install app** or **Add to Home screen**, then **Install**.
+- **iPhone/iPad (Safari or Chrome)**: tap **Share**, then **Add to Home Screen**. Chrome has Share at the top right of the address bar.
+- **Desktop (Chrome or Edge)**: click the install icon in the address bar, or the menu, then **Cast, save and share → Install page as app**.
+
+If no install option appears, the app may already be installed on that device (Chrome then offers **Open in app** instead), or the browser may be in a private or incognito window, where installing isn't available.
 
 ### Run it locally
 
@@ -48,6 +52,10 @@ Then open <http://localhost:8000>. Opening `index.html` directly from disk also 
 - Data is separate for each device, and for each browser on that device. People sharing one device and browser share one ledger.
 - The app asks the browser to keep its storage persistent, but **clearing your browser's site data deletes your ledger**, and so does uninstalling the app on some phones.
 - The first time the app opens on a device, the ledger is empty. To explore with made-up data first, use **Load sample month** on the empty dashboard; those entries are marked as examples and **Clear examples** removes them.
+
+## Upcoming updates
+
+Planned improvements are listed in [ROADMAP.md](ROADMAP.md).
 
 ## Project structure
 
