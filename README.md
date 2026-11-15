@@ -89,6 +89,9 @@ Each time the app opens with an internet connection (and whenever the connection
    ```
 
    This updates `VERSION` in `sw.js` and the details in `version.json`, which is what the update prompt shows. Without Python, edit those two files by hand and keep the version numbers identical.
-3. Commit and push to `main`. GitHub Pages republishes the site within a few minutes, and each device picks up the update the next time it opens online.
+3. Optionally, write fuller release notes in `release-notes/<version>.md` (for example `release-notes/1.2.0.md`).
+4. Commit and push to `main`. GitHub Pages republishes the site within a few minutes, and each device picks up the update the next time it opens online.
+
+A GitHub Actions workflow (`.github/workflows/release.yml`) then creates a GitHub release named `v<version>` automatically. It uses `release-notes/<version>.md` if it exists, or the note in `version.json` otherwise. A version that already has a release is skipped. You can also run it by hand from the **Actions** tab.
 
 Changes pushed without a new version number are not delivered to devices that already have the app, because they keep running their offline copy.

@@ -1,0 +1,42 @@
+# Creates a GitHub release whenever the app's version number changes.
+# The version comes from version.json. Release notes come from
+# release-notes/<version>.md if that file exists, otherwise from the
+# "notes" line in version.json. Versions that already have a release are skipped.
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - version.json
+      - release-notes/**
+      - .github/workflows/release.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create release for the current version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(jq -r '.version' version.json)
+          tag="v$version"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Release $tag already exists; nothing to do."
+            exit 0
+          fi
+          if [ -f "release-notes/$version.md" ]; then
+            cp "release-notes/$version.md" notes.md
+          else
+            jq -r '.notes' version.json > notes.md
+            printf '\n\n**Live app:** https://t-ffy.github.io/Monthly-Ledger/\n' >> notes.md
+          fi
+          gh release create "$tag" --target "$GITHUB_SHA" --title "Monthly Ledger $version" --notes-file notes.md --latest
+          echo "Created release $tag"
