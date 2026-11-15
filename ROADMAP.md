@@ -1,22 +1,12 @@
 # Upcoming updates
 
-Planned improvements, roughly in priority order. Nothing here is built yet.
+Planned improvements, roughly in priority order.
 
-## Next release (suggested 1.3.0)
+## Released
 
-1. **Back up and restore**
-   All data lives in one browser on one device, so clearing site data, losing the phone or uninstalling the app can wipe the ledger.
-   - Export everything to a backup file.
-   - Import a backup file to restore it or move to a new device.
-   - A gentle reminder when there hasn't been a backup in 30 days.
+- **1.3.0**: back up and restore (with a 30-day reminder), edit entries, goals and contributions, and repeating monthly entries.
 
-2. **Edit entries**
-   Tap an entry to fix its description, amount, category or date, instead of deleting and re-adding it. The same applies to savings goals (name, target, date) and logged contributions.
-
-3. **Recurring entries**
-   Mark income or expenses such as salary, rent and subscriptions as monthly, so they are added automatically or with one tap at the start of each month.
-
-## Later
+## Planned
 
 ### More insight from the same data
 - **Trends over time:** income against expenses for the last 6 to 12 months, and how each category changes month to month.

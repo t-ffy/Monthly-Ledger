@@ -265,7 +265,7 @@ tfoot td{font-weight:600;border-top:1px solid var(--line);border-bottom:0;paddin
 .goal-note b{color:var(--fg)}
 form.contrib{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,160px) auto;gap:8px;align-items:center;padding-top:4px}
 .contrib-list{display:flex;flex-direction:column;border-top:1px solid var(--line)}
-.c-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.c-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);font-size:13.5px}
 .c-row:last-child{border-bottom:0}
 .c-row .when{color:var(--muted);font-variant-numeric:tabular-nums}
 .c-row .amt{font-variant-numeric:tabular-nums;font-weight:600;color:var(--good)}
@@ -274,6 +274,58 @@ form.contrib{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,160px) au
 
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;font-weight:500;z-index:30;box-shadow:0 8px 24px rgba(0,0,0,.2);max-width:calc(100vw - 32px);animation:toast-in .22s var(--ease)}
 @keyframes toast-in{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+
+/* ---- editing, repeating items, backup ---- */
+.form-actions{display:flex;gap:8px;flex-wrap:wrap}
+.form-actions .btn{flex:1 1 auto}
+.btn.danger{background:var(--bad);color:#ffffff}
+.btn.danger:hover{background:var(--bad);filter:brightness(1.08)}
+.check{display:flex;gap:10px;align-items:flex-start;cursor:pointer;font-weight:500;font-size:14.5px;line-height:1.4}
+.check input{width:18px;height:18px;margin:1px 0 0;accent-color:var(--accent);flex:none;cursor:pointer}
+.check small{display:block;font-weight:400;font-size:var(--t-small);color:var(--muted);margin-top:2px}
+.editing-panel{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.pill.rep{background:var(--accent-soft);color:var(--accent)}
+td.acts{width:1%;white-space:nowrap}
+.acts-in{display:flex;gap:2px;justify-content:flex-end}
+.icon-act{border:0;background:none;color:var(--muted);cursor:pointer;width:32px;height:32px;border-radius:8px;display:grid;place-items:center;transition:background-color .15s,color .15s}
+.icon-act:hover{background:var(--accent-soft);color:var(--accent)}
+.icon-act svg{width:15px;height:15px}
+tbody tr.editing,tbody tr.editing:hover{background:var(--accent-soft)}
+.due{border-color:var(--accent-line)}
+.due .row{grid-template-columns:auto minmax(0,1fr) auto auto}
+.row-acts{display:flex;gap:6px}
+.row-acts .btn{padding:7px 14px;font-size:13.5px}
+.due-foot{display:flex;justify-content:flex-end}
+.rule-list{display:flex;flex-direction:column}
+.rule-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 14px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.rule-row:first-child{border-top:0;padding-top:0}
+.rule-row .desc{font-weight:500}
+.rule-row .money{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.rule-acts{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px}
+form.rule-edit,form.goal-edit{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:14px;border:1px solid var(--accent-line);border-radius:var(--radius-sm);background:var(--raised)}
+form.rule-edit .field:first-child,form.goal-edit .field:first-child,form.rule-edit .form-actions,form.goal-edit .form-actions,form.rule-edit .form-msg,form.goal-edit .form-msg,form.rule-edit .hint{grid-column:1/-1}
+form.rule-edit .form-msg:empty,form.goal-edit .form-msg:empty,form.c-edit .form-msg:empty{display:none}
+.rule-list form.rule-edit{margin:6px 0}
+form.c-edit{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,150px) auto auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+form.c-edit .btn{padding:9px 14px;font-size:13.5px}
+form.c-edit .form-msg{grid-column:1/-1}
+.body-text{margin:0;color:var(--fg-2);max-width:62ch}
+.restore-card{display:flex;flex-direction:column;gap:10px;padding:16px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--raised)}
+.restore-card p{margin:0}
+.restore-card .title{font-family:var(--display);font-weight:600;font-size:16px}
+.warn-text{padding:10px 12px;border-radius:9px;background:var(--warn-soft);color:var(--fg);font-size:14px}
+.err-text{padding:10px 12px;border-radius:9px;background:var(--bad-soft);color:var(--bad);font-size:14px;font-weight:500;margin:0}
+.file-in{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none}
+.file-in:focus-visible+.file-pick{outline:2px solid var(--accent);outline-offset:2px}
+.file-pick{align-self:flex-start;display:inline-flex;align-items:center;gap:8px;cursor:pointer}
+.file-pick svg{width:16px;height:16px}
+.banner-actions{display:flex;gap:8px;flex-wrap:wrap}
+.banner-actions .btn{padding:8px 16px;font-size:13.5px}
+.data-foot{margin:0;font-size:var(--t-small);color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center}
+.rail-link{display:flex;align-items:center;gap:8px;padding:8px 10px;margin:0 -10px 6px;border-radius:8px;color:var(--rail-fg);text-decoration:none;font-weight:500;font-size:13.5px;transition:background-color .15s,color .15s}
+.rail-link svg{width:16px;height:16px}
+.rail-link:hover{background:var(--rail-hover);color:var(--rail-hi)}
+.rail-link[aria-current="page"]{background:var(--accent);color:var(--on-accent)}
 
 /* ---- install offer ---- */
 .install-wrap{margin-bottom:20px}
@@ -363,6 +415,13 @@ form.contrib{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,160px) au
   tfoot td{padding:0;border:0}
   tfoot td:last-child{display:none}
   .b-row{grid-template-columns:minmax(0,1fr) 116px}
+  .due .row{grid-template-columns:auto minmax(0,1fr) auto}
+  .due .row .row-acts{grid-column:2/-1}
+  .due-foot .btn{flex:1}
+  form.rule-edit,form.goal-edit{grid-template-columns:minmax(0,1fr)}
+  form.c-edit{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  form.c-edit .btn{grid-column:auto}
+  td.acts{width:auto}
 }
 @media (prefers-reduced-motion:no-preference){.fill{transition:width .5s var(--ease)}}
 @media (prefers-reduced-motion:reduce){.wrap.enter>*,.toast{animation:none}*{transition:none!important}}
@@ -380,6 +439,7 @@ form.contrib{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,160px) au
       <a href="#goals" data-view="goals"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="10" r="7"/><circle cx="10" cy="10" r="3.5"/><circle cx="10" cy="10" r=".6" fill="currentColor"/></svg><span class="full">Savings goals</span><span class="short">Goals</span></a>
     </nav>
     <div class="rail-foot">
+      <a class="rail-link" href="#backup" data-view="backup"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2.8 4 5v4.6c0 3.7 2.6 6.4 6 7.6 3.4-1.2 6-3.9 6-7.6V5z"/><path d="m7.4 10 1.8 1.8 3.5-3.6"/></svg>Backup &amp; restore</a>
       <label for="currency">Currency</label>
       <select id="currency">
         <option value="USD">USD $</option><option value="EUR">EUR €</option><option value="GBP">GBP £</option>
@@ -415,7 +475,8 @@ const INCOME_CATS=["Salary","Freelance","Business","Investments","Gifts","Refund
 const EXPENSE_CATS=["Housing","Groceries","Transport","Utilities","Dining out","Health","Entertainment","Shopping","Education","Savings","Other"];
 const LOCAL_KEY="monthly-ledger-v1";
 
-const state={mode:"loading",entries:[],goals:[],contribs:[],confirmGoal:null,budgets:{},currency:"USD",month:monthKey(new Date()),view:"dashboard"};
+const BACKUP_FORMAT=1;
+const state={mode:"loading",entries:[],goals:[],contribs:[],recurring:[],meta:{},editing:null,editGoal:null,editContrib:null,editRule:null,confirmRule:null,restore:null,confirmGoal:null,budgets:{},currency:"USD",month:monthKey(new Date()),view:"dashboard"};
 
 /* ---------- helpers ---------- */
 function monthKey(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")}
@@ -451,14 +512,20 @@ const store={
   async remove(id){state.entries=state.entries.filter(e=>e.id!==id);saveLocal();render()},
   async saveSettings(){saveLocal()},
   async putDoc(kind,body){state[kind]=state[kind].filter(x=>x.id!==body.id).concat([body]);saveLocal();render()},
-  async dropDoc(kind,id){state[kind]=state[kind].filter(x=>x.id!==id);saveLocal();render()}
+  async dropDoc(kind,id){state[kind]=state[kind].filter(x=>x.id!==id);saveLocal();render()},
+  async updateEntry(entry){state.entries=state.entries.map(e=>e.id===entry.id?entry:e);saveLocal();render()}
 };
-function saveLocal(){try{localStorage.setItem(LOCAL_KEY,JSON.stringify({entries:state.entries,budgets:state.budgets,currency:state.currency,goals:state.goals,contribs:state.contribs}))}catch(e){}}
+function saveLocal(silent){
+  try{localStorage.setItem(LOCAL_KEY,JSON.stringify({entries:state.entries,budgets:state.budgets,currency:state.currency,goals:state.goals,contribs:state.contribs,recurring:state.recurring,meta:state.meta}));return true}
+  catch(e){if(!silent)toast("Couldn't save on this device. Its storage may be full.");return false}
+}
 function startLocal(reason){
   state.mode="local";
   let saved=null;try{saved=JSON.parse(localStorage.getItem(LOCAL_KEY)||"null")}catch(e){}
-  if(saved){state.entries=saved.entries||[];state.goals=saved.goals||[];state.contribs=saved.contribs||[];state.budgets=saved.budgets||{};state.currency=saved.currency||"USD"}
-  else{state.entries=[];state.budgets={};state.goals=[];state.contribs=[];saveLocal()} // new device: start with a clean slate
+  if(saved){state.entries=saved.entries||[];state.goals=saved.goals||[];state.contribs=saved.contribs||[];state.recurring=saved.recurring||[];state.meta=saved.meta||{};state.budgets=saved.budgets||{};state.currency=saved.currency||"USD"}
+  else{state.entries=[];state.budgets={};state.goals=[];state.contribs=[];state.recurring=[];state.meta={}} // new device: start with a clean slate
+  if(!state.meta.firstUseAt)state.meta.firstUseAt=new Date().toISOString();
+  saveLocal(true);
   setSync(true,reason||"Saved on this device");
   render();
 }
@@ -484,8 +551,145 @@ const ICON={
   outbox:'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 11V3M6.5 6.5 10 3l3.5 3.5"/><path d="M3 12v3.5A1.5 1.5 0 0 0 4.5 17h11a1.5 1.5 0 0 0 1.5-1.5V12h-4l-1 2H8l-1-2z"/></svg>',
   gauge:'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M3.5 14a7 7 0 1 1 13 0"/><path d="M10 13.5l3-4.5"/></svg>',
   target:'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="10" cy="10" r="7"/><circle cx="10" cy="10" r="3.5"/><circle cx="10" cy="10" r=".8" fill="currentColor"/></svg>',
+  edit:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 2.8l2.7 2.7-7.6 7.6-3.3.6.6-3.3z"/></svg>',
+  upload:'<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13V4M6 7.5 10 3.5 14 7.5"/><path d="M4 15.5h12"/></svg>',
   trash:'<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 4.5h10M6.5 4.5V3h3v1.5M4.5 4.5l.6 8.5h5.8l.6-8.5"/></svg>'
 };
+
+function ordinal(n){const s=["th","st","nd","rd"],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0])}
+function catOptions(cats,sel){const list=!sel||cats.includes(sel)?cats:[...cats,sel];return list.map(c=>`<option${c===sel?" selected":""}>${esc(c)}</option>`).join("")}
+function plural(n,one,many){return n+" "+(n===1?one:(many||one+"s"))}
+function relDays(iso){const d=Math.floor((Date.now()-Date.parse(iso))/864e5);return d<=0?"today":d===1?"yesterday":d+" days ago"}
+function isIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1)}
+
+/* repeating items */
+function dueDate(r,month){const [y,m]=month.split("-").map(Number);const last=new Date(y,m,0).getDate();return month+"-"+String(Math.min(r.day,last)).padStart(2,"0")}
+function dueRules(type){
+  if(state.month>monthKey(new Date()))return [];
+  return state.recurring.filter(r=>(!type||r.type===type)&&r.start<=state.month&&!(r.skipped||[]).includes(state.month)
+    &&!state.entries.some(e=>e.recurringId===r.id&&e.date&&e.date.slice(0,7)===state.month)).sort((a,b)=>a.day-b.day);
+}
+function entryFromRule(r,month){return {id:uid(),type:r.type,desc:r.desc,amount:Number(r.amount),category:r.category,date:dueDate(r,month),recurringId:r.id,createdAt:new Date().toISOString()}}
+function dueHTML(type){
+  const due=dueRules(type);if(!due.length)return "";
+  const name=monthLabel(state.month).split(" ")[0];
+  return `<section class="panel due"><div class="panel-head"><h2>Repeating items for ${name}</h2><span class="hint">Add each with one tap, or skip it this month</span></div>
+    <div class="list">${due.map(r=>{const isIn=r.type==="income";return `<div class="row"><div class="badge ${isIn?"in":"out"}">${esc(initials(r.category))}</div>
+      <div class="what"><div class="desc">${esc(r.desc)}</div><div class="meta">${esc(r.category)} · due ${shortDate(dueDate(r,state.month))}</div></div>
+      <div class="money ${isIn?"in":""}">${isIn?"+":"−"}${fmt(Number(r.amount))}</div>
+      <div class="row-acts"><button class="btn ghost" data-skiprule="${esc(r.id)}" aria-label="Skip ${esc(r.desc)} this month">Skip</button><button class="btn" data-addrule="${esc(r.id)}" aria-label="Add ${esc(r.desc)}">Add</button></div></div>`}).join("")}</div>
+    ${due.length>1?`<div class="due-foot"><button class="btn" data-act="add-all-due" data-type="${type||""}">Add all ${due.length}</button></div>`:""}</section>`;
+}
+function repeatRulesHTML(type){
+  const rules=state.recurring.filter(r=>r.type===type).sort((a,b)=>a.day-b.day);
+  if(!rules.length)return "";
+  const cats=type==="income"?INCOME_CATS:EXPENSE_CATS;
+  return `<section class="panel"><div class="panel-head"><h2>Repeats every month</h2><span class="hint">${plural(rules.length,"item")}</span></div>
+  <div class="rule-list">${rules.map(r=>{
+    const id=esc(r.id);
+    if(state.editRule===r.id)return `<form class="rule-edit" data-kind="rule-edit" data-id="${id}" novalidate>
+      <div class="field"><label for="re-desc-${id}">Description</label><input id="re-desc-${id}" name="desc" maxlength="80" value="${esc(r.desc)}" autocomplete="off"></div>
+      <div class="field"><label for="re-amt-${id}">Amount</label><div class="money-in"><span>${esc(symbol())}</span><input id="re-amt-${id}" name="amount" type="number" inputmode="decimal" min="0" step="0.01" value="${Number(r.amount)}"></div></div>
+      <div class="field"><label for="re-day-${id}">Day of month</label><input id="re-day-${id}" name="day" type="number" inputmode="numeric" min="1" max="31" step="1" value="${r.day}"></div>
+      <div class="field" style="grid-column:1/-1"><label for="re-cat-${id}">Category</label><select id="re-cat-${id}" name="category">${catOptions(cats,r.category)}</select></div>
+      <p class="hint">Changes apply to months you haven't added yet. Entries already added stay as they are.</p>
+      <div class="form-actions"><button class="btn" type="submit">Save</button><button class="btn ghost" type="button" data-act="cancel-rule">Cancel</button></div>
+      <p class="form-msg" aria-live="polite"></p>
+    </form>`;
+    const confirming=state.confirmRule===r.id;
+    return `<div class="rule-row"><div class="what"><div class="desc">${esc(r.desc)}</div><div class="meta">${esc(r.category)} · ${ordinal(r.day)} of each month · since ${monthLabel(r.start)}</div></div>
+      <div class="money">${fmt(Number(r.amount))}</div>
+      <div class="rule-acts">${confirming?`<span class="hint">Stop repeating this? Entries already added stay.</span><button class="link danger" data-stoprule="${id}">Stop repeating</button><button class="link" data-act="cancel-stop">Cancel</button>`
+        :`<button class="link" data-editrule="${id}">Edit</button><button class="link danger" data-askrule="${id}">Stop repeating</button>`}</div></div>`;
+  }).join("")}</div></section>`;
+}
+
+/* backup & restore */
+function backupPayload(){return {app:"monthly-ledger",format:BACKUP_FORMAT,exportedAt:new Date().toISOString(),
+  data:{entries:state.entries,budgets:state.budgets,currency:state.currency,goals:state.goals,contribs:state.contribs,recurring:state.recurring}}}
+async function downloadBackup(){
+  const name="monthly-ledger-backup-"+todayISO()+".json";
+  const blob=new Blob([JSON.stringify(backupPayload(),null,2)],{type:"application/json"});
+  if(isIOS()&&navigator.canShare){ // iPhone/iPad: the share sheet ("Save to Files") is more reliable than a download
+    try{const file=new File([blob],name,{type:"application/json"});
+      if(navigator.canShare({files:[file]})){await navigator.share({files:[file],title:"Monthly Ledger backup"});return backedUp(name)}}
+    catch(e){if(e&&e.name==="AbortError"){toast("Backup cancelled");return}}
+  }
+  const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=name;
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),10000);
+  backedUp(name);
+}
+function backedUp(name){state.meta.lastBackupAt=new Date().toISOString();delete state.meta.snoozeUntil;saveLocal();render();toast("Backup saved as "+name)}
+function parseBackup(text){
+  const bad={error:"This file isn't a Monthly Ledger backup. Choose the .json file the app saved when you backed up."};
+  let j;try{j=JSON.parse(text)}catch(e){return bad}
+  if(!j||j.app!=="monthly-ledger"||!j.data||typeof j.data!=="object")return bad;
+  if(Number(j.format)>BACKUP_FORMAT)return {error:"This backup was made by a newer version of Monthly Ledger. Update the app, then try again."};
+  const d=j.data;let skipped=0;
+  const isDate=v=>typeof v==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(v), isMonth=v=>typeof v==="string"&&/^\d{4}-\d{2}$/.test(v);
+  const amt=v=>typeof v==="number"&&isFinite(v)&&v>0, str=(v,max)=>typeof v==="string"&&v.trim()!==""&&v.length<=max;
+  const keep=(arr,ok)=>{if(!Array.isArray(arr))return [];const out=arr.filter(x=>x&&typeof x==="object"&&ok(x));skipped+=arr.length-out.length;return out};
+  const entries=keep(d.entries,e=>str(e.id,100)&&(e.type==="income"||e.type==="expense")&&str(e.desc,200)&&amt(e.amount)&&str(e.category,60)&&isDate(e.date));
+  const goals=keep(d.goals,g=>str(g.id,100)&&str(g.name,120)&&amt(g.target)&&(g.targetDate==null||isDate(g.targetDate)));
+  const goalIds=new Set(goals.map(g=>g.id));
+  const contribs=keep(d.contribs,c=>str(c.id,100)&&goalIds.has(c.goalId)&&amt(c.amount)&&isDate(c.date));
+  const recurring=keep(d.recurring,r=>str(r.id,100)&&(r.type==="income"||r.type==="expense")&&str(r.desc,200)&&amt(r.amount)&&str(r.category,60)&&Number.isInteger(r.day)&&r.day>=1&&r.day<=31&&isMonth(r.start))
+    .map(r=>({...r,skipped:Array.isArray(r.skipped)?r.skipped.filter(isMonth):[]}));
+  const budgets={};
+  if(d.budgets&&typeof d.budgets==="object")for(const [k,v] of Object.entries(d.budgets)){if(k.length<=60&&amt(v))budgets[k]=v;else skipped++}
+  const known=[...document.getElementById("currency").options].map(o=>o.value);
+  const currency=known.includes(d.currency)?d.currency:state.currency;
+  return {data:{entries,goals,contribs,recurring,budgets,currency},exportedAt:typeof j.exportedAt==="string"?j.exportedAt:null,skipped};
+}
+function dataSummary(d){
+  const parts=[plural(d.entries.length,"entry","entries"),plural(d.goals.length,"savings goal"),plural(d.contribs.length,"contribution"),plural(d.recurring.length,"repeating item")];
+  const b=Object.keys(d.budgets).length;
+  return parts.join(", ")+(b?" and budget limits for "+plural(b,"category","categories"):"");
+}
+function backupReminder(){
+  const m=state.meta||{};
+  if(!(state.entries.some(e=>!e.example)||state.goals.length))return "";
+  if(m.snoozeUntil&&Date.now()<m.snoozeUntil)return "";
+  const since=m.lastBackupAt||m.firstUseAt;if(!since)return "";
+  const days=Math.floor((Date.now()-Date.parse(since))/864e5);if(!(days>=30))return "";
+  return `<div class="banner"><p><b>${m.lastBackupAt?`It's been ${days} days since your last backup.`:"You haven't backed up your ledger yet."}</b> Your data only lives on this device. A backup file lets you get it back if the browser's data is cleared or the device is lost.</p>
+    <div class="banner-actions"><button class="btn ghost" data-act="snooze-backup">Remind me later</button><button class="btn" data-act="download-backup">Back up now</button></div></div>`;
+}
+function viewBackup(){
+  const m=state.meta||{};const r=state.restore;
+  const cur={entries:state.entries,goals:state.goals,contribs:state.contribs,recurring:state.recurring,budgets:state.budgets};
+  const hasData=state.entries.length||state.goals.length||state.recurring.length;
+  let restoreBody;
+  if(r&&r.data){
+    const when=r.exportedAt&&!isNaN(Date.parse(r.exportedAt))?new Date(r.exportedAt).toLocaleString(undefined,{dateStyle:"medium",timeStyle:"short"}):"an unknown date";
+    restoreBody=`<div class="restore-card"><p class="title">Backup from ${esc(when)}</p><p>${dataSummary(r.data)}.</p>
+      ${r.skipped?`<p class="hint">${plural(r.skipped,"item")} in the file couldn't be read and will be left out.</p>`:""}
+      <p class="warn-text"><b>Restoring replaces everything on this device</b>${hasData?` (currently ${dataSummary(cur)})`:""}. This can't be undone.${hasData?" Download a backup of the current data first if you might need it.":""}</p>
+      <div class="form-actions"><button class="btn danger" data-act="restore-confirm">Replace my data</button><button class="btn ghost" data-act="restore-cancel">Cancel</button></div></div>`;
+  }else{
+    restoreBody=`${r&&r.error?`<p class="err-text" role="alert">${esc(r.error)}</p>`:""}
+      <input class="file-in" id="restore-file" type="file" accept=".json,application/json">
+      <label class="btn ghost file-pick" for="restore-file">${ICON.upload}Choose backup file</label>`;
+  }
+  return `<div class="head"><div><div class="eyebrow">Your data</div><h1>Backup &amp; restore</h1></div></div>
+  <section class="panel"><div class="totals">
+    <div>Last backup<b>${m.lastBackupAt?relDays(m.lastBackupAt).replace(/^./,c=>c.toUpperCase()):"Never"}</b></div>
+    <div>Entries<b>${state.entries.length}</b></div>
+    <div>Savings goals<b>${state.goals.length}</b></div>
+    <div>Repeating items<b>${state.recurring.length}</b></div>
+  </div></section>
+  <section class="grid2">
+    <div class="panel"><h2>Back up this device</h2>
+      <p class="body-text">Saves everything (entries, budgets, savings goals, repeating items and your currency) into one file. Keep it somewhere safe, such as cloud storage or an email to yourself.</p>
+      <p class="body-text">Your ledger only lives on this device, so a backup is the only way to get it back if the browser's data is cleared or the device is lost.</p>
+      <button class="btn" data-act="download-backup">Download backup</button>
+    </div>
+    <div class="panel"><h2>Restore from a backup</h2>
+      <p class="body-text">Recover your data, or move it to a new device, from a backup file this app saved.</p>
+      ${restoreBody}
+    </div>
+  </section>`;
+}
 
 function emptyState(icon,title,text,action,compact){
   return `<div class="empty-state${compact?" compact":""}"><div class="es-ico">${ICON[icon]}</div><div><p class="es-title">${title}</p><p class="es-text">${text}</p></div>${action?`<button class="btn ghost" data-go="${action[0]}">${action[1]}</button>`:""}</div>`;
@@ -519,7 +723,7 @@ function viewDashboard(){
   const max=cats.length?cats[0][1]:0;
   const budgeted=Object.entries(state.budgets).filter(([,v])=>v>0);
   const recent=[...month].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6);
-  return header("Overview","Dashboard")+banner()+`
+  return header("Overview","Dashboard")+banner()+backupReminder()+dueHTML(null)+`
   <section class="stats">
     <div class="stat inc"><div class="label"><span class="chip-ico">${ICON.up}</span>Total income</div><div class="value">${fmt(inc)}</div><div class="sub">${month.filter(e=>e.type==="income").length} entries this month</div></div>
     <div class="stat exp"><div class="label"><span class="chip-ico">${ICON.down}</span>Total expenses</div><div class="value">${fmt(exp)}</div><div class="sub">${month.filter(e=>e.type==="expense").length} entries this month</div></div>
@@ -537,7 +741,8 @@ function viewDashboard(){
     <div class="panel"><div class="panel-head"><h2>Recent activity</h2><a class="link" href="#expenses">View all</a></div>
       ${recent.length?`<div class="list">${recent.map(rowHTML).join("")}</div>`:emptyState("list","No activity this month","Income and expenses you record will show up here, newest first.",["income","Add income"])}
     </div>
-  </section>`;
+  </section>
+  <p class="data-foot"><span>${state.meta.lastBackupAt?"Last backup "+relDays(state.meta.lastBackupAt):"Not backed up yet"}</span><a class="link" href="#backup">Backup &amp; restore</a></p>`;
 }
 function insightsHTML(month,inc,exp,net,by){
   const name=monthLabel(state.month).split(" ")[0];
@@ -576,32 +781,36 @@ function rowHTML(e){
 }
 
 function viewEntries(type){
-  const isIn=type==="income";
+  const isIn=type==="income", word=isIn?"income":"expense";
   const cats=isIn?INCOME_CATS:EXPENSE_CATS;
   const list=state.entries.filter(e=>e.type===type&&inMonth(e)).sort((a,b)=>b.date.localeCompare(a.date));
   const total=sum(list);
-  const def=state.month===monthKey(new Date())?todayISO():state.month+"-01";
-  return header(isIn?"Money in":"Money out",isIn?"Income":"Expenses")+banner()+`
+  const ed=state.editing?state.entries.find(e=>e.id===state.editing&&e.type===type):null;
+  const def=ed?ed.date:(state.month===monthKey(new Date())?todayISO():state.month+"-01");
+  return header(isIn?"Money in":"Money out",isIn?"Income":"Expenses")+banner()+dueHTML(type)+`
   <section class="split">
-    <div class="panel"><h2>Add ${isIn?"income":"an expense"}</h2>
-      <form class="entry" data-type="${type}" novalidate>
-        <div class="field"><label for="${type}-desc">Description</label><input id="${type}-desc" name="desc" maxlength="80" placeholder="${isIn?"e.g. Monthly salary":"e.g. Weekly groceries"}" autocomplete="off"></div>
+    <div class="panel${ed?" editing-panel":""}" id="${type}-form-panel"><h2>${ed?"Edit "+word:"Add "+(isIn?"income":"an expense")}</h2>
+      <form class="entry" data-type="${type}"${ed?` data-edit="${esc(ed.id)}"`:""} novalidate>
+        <div class="field"><label for="${type}-desc">Description</label><input id="${type}-desc" name="desc" maxlength="80" placeholder="${isIn?"e.g. Monthly salary":"e.g. Weekly groceries"}" autocomplete="off" value="${ed?esc(ed.desc):""}"></div>
         <div class="two">
-          <div class="field"><label for="${type}-amount">Amount</label><div class="money-in"><span>${esc(symbol())}</span><input id="${type}-amount" name="amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00"></div></div>
+          <div class="field"><label for="${type}-amount">Amount</label><div class="money-in"><span>${esc(symbol())}</span><input id="${type}-amount" name="amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" value="${ed?Number(ed.amount):""}"></div></div>
           <div class="field"><label for="${type}-date">Date</label><input id="${type}-date" name="date" type="date" value="${def}"></div>
         </div>
-        <div class="field"><label for="${type}-cat">Category</label><select id="${type}-cat" name="category">${cats.map(c=>`<option>${c}</option>`).join("")}</select></div>
-        <button class="btn" type="submit">Add ${isIn?"income":"expense"}</button>
+        <div class="field"><label for="${type}-cat">Category</label><select id="${type}-cat" name="category">${catOptions(cats,ed?ed.category:"")}</select></div>
+        ${ed?(ed.recurringId?`<p class="hint">This entry comes from a monthly repeat. Changes here apply to this entry only.</p>`:"")
+          :`<label class="check" for="${type}-repeat"><input type="checkbox" id="${type}-repeat" name="repeat"><span>Repeat every month<small>It will be ready to add with one tap each month.</small></span></label>`}
+        <div class="form-actions">${ed?`<button class="btn" type="submit">Save changes</button><button class="btn ghost" type="button" data-act="cancel-edit">Cancel</button>`:`<button class="btn" type="submit">Add ${word}</button>`}</div>
         <p class="form-msg" aria-live="polite"></p>
       </form>
     </div>
-    <div class="panel"><div class="panel-head"><h2>${monthLabel(state.month)}</h2><span class="hint">${list.length} ${list.length===1?"entry":"entries"}</span></div>
-      ${list.length?`<div class="table-wrap"><table><thead><tr><th>Date</th><th>Description</th><th>Category</th><th class="amt">Amount</th><th><span hidden>Delete</span></th></tr></thead><tbody>
-      ${list.map(e=>`<tr><td class="date">${shortDate(e.date)}</td><td class="desc">${esc(e.desc)}${e.example?'<span class="pill ex">Example</span>':""}</td><td><span class="cat">${esc(e.category)}</span></td><td class="amt">${fmt(Number(e.amount))}</td><td><button class="del" data-del="${esc(e.id)}" aria-label="Delete ${esc(e.desc)}">${ICON.trash}</button></td></tr>`).join("")}
+    <div class="panel"><div class="panel-head"><h2>${monthLabel(state.month)}</h2><span class="hint">${plural(list.length,"entry","entries")}</span></div>
+      ${list.length?`<div class="table-wrap"><table><thead><tr><th>Date</th><th>Description</th><th>Category</th><th class="amt">Amount</th><th><span hidden>Actions</span></th></tr></thead><tbody>
+      ${list.map(e=>`<tr${ed&&ed.id===e.id?' class="editing"':""}><td class="date">${shortDate(e.date)}</td><td class="desc">${esc(e.desc)}${e.recurringId?'<span class="pill rep">Monthly</span>':""}${e.example?'<span class="pill ex">Example</span>':""}</td><td><span class="cat">${esc(e.category)}</span></td><td class="amt">${fmt(Number(e.amount))}</td>
+        <td class="acts"><div class="acts-in"><button class="icon-act" data-edit="${esc(e.id)}" aria-label="Edit ${esc(e.desc)}">${ICON.edit}</button><button class="del" data-del="${esc(e.id)}" aria-label="Delete ${esc(e.desc)}">${ICON.trash}</button></div></td></tr>`).join("")}
       </tbody><tfoot><tr><td colspan="3">Total</td><td class="amt">${fmt(total)}</td><td></td></tr></tfoot></table></div>`
-      :emptyState(isIn?"inbox":"outbox",`No ${isIn?"income":"expenses"} in ${monthLabel(state.month)}`,`Use the form to record your first ${isIn?"income":"expense"} for this month. It will be listed here with a running total.`)}
+      :emptyState(isIn?"inbox":"outbox",`No ${isIn?"income":"expenses"} in ${monthLabel(state.month)}`,`Use the form to record your first ${word} for this month. It will be listed here with a running total.`)}
     </div>
-  </section>`;
+  </section>`+repeatRulesHTML(type);
 }
 
 function viewBudget(){
@@ -650,7 +859,13 @@ function viewGoals(){
     const shown=cs.slice(0,4);
     const confirming=state.confirmGoal===g.id;
     return `<article class="panel goal">
-      <div class="goal-top"><div><h2>${esc(g.name)}${pill}</h2><div class="meta">Target ${fmt(target)}${g.targetDate?" by "+longDate(g.targetDate):""}</div></div></div>
+      ${state.editGoal===g.id?`<form class="goal-edit" data-kind="goal-edit" data-id="${esc(g.id)}" novalidate>
+        <div class="field"><label for="ge-name-${esc(g.id)}">Goal name</label><input id="ge-name-${esc(g.id)}" name="name" maxlength="60" value="${esc(g.name)}" autocomplete="off"></div>
+        <div class="field"><label for="ge-target-${esc(g.id)}">Target amount</label><div class="money-in"><span>${esc(symbol())}</span><input id="ge-target-${esc(g.id)}" name="target" type="number" inputmode="decimal" min="0" step="0.01" value="${target}"></div></div>
+        <div class="field"><label for="ge-date-${esc(g.id)}">Target date <span class="opt">(optional)</span></label><input id="ge-date-${esc(g.id)}" name="targetDate" type="date" value="${g.targetDate||""}"></div>
+        <div class="form-actions"><button class="btn" type="submit">Save</button><button class="btn ghost" type="button" data-act="cancel-goal-edit">Cancel</button></div>
+        <p class="form-msg" aria-live="polite"></p>
+      </form>`:`<div class="goal-top"><div><h2>${esc(g.name)}${pill}</h2><div class="meta">Target ${fmt(target)}${g.targetDate?" by "+longDate(g.targetDate):""}</div></div></div>`}
       <div class="goal-fig"><span><span class="big">${Math.round(pct*100)}%</span> saved</span><span><b>${fmt(saved)}</b> saved · <b>${fmt(remaining)}</b> remaining</span></div>
       <div class="track" role="progressbar" aria-label="${esc(g.name)} progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(Math.min(pct,1)*100)}"><div class="fill ${done?"ok":""}" style="width:${saved>0?Math.max(2,Math.min(pct,1)*100):0}%"></div></div>
       <p class="goal-note">${note}</p>
@@ -660,8 +875,13 @@ function viewGoals(){
         <button class="btn" type="submit">Log contribution</button>
       </form>
       <p class="form-msg" id="cmsg-${esc(g.id)}" aria-live="polite"></p>
-      ${cs.length?`<div class="contrib-list">${shown.map(c=>`<div class="c-row"><span class="when">${longDate(c.date)}</span><span class="amt">+${fmt(Number(c.amount))}</span><button class="del" data-delc="${esc(c.id)}" aria-label="Delete contribution of ${fmt(Number(c.amount))}">${ICON.trash}</button></div>`).join("")}</div>${cs.length>4?`<p class="goal-note">${cs.length-4} earlier ${cs.length-4===1?"contribution":"contributions"} not shown.</p>`:""}`:`<p class="goal-note">No contributions yet. Log the first one above.</p>`}
-      <div class="goal-actions">${confirming?`<span>Delete this goal and its ${cs.length} ${cs.length===1?"contribution":"contributions"}?</span><button class="link danger" data-delg="${esc(g.id)}">Delete</button><button class="link" data-act="cancel-g">Cancel</button>`:`<button class="link danger" data-askg="${esc(g.id)}">Delete goal</button>`}</div>
+      ${cs.length?`<div class="contrib-list">${shown.map(c=>state.editContrib===c.id?`<form class="c-edit" data-kind="contrib-edit" data-id="${esc(c.id)}" novalidate>
+        <div class="field money-in"><span>${esc(symbol())}</span><input id="ce-amt-${esc(c.id)}" name="amount" type="number" inputmode="decimal" min="0" step="0.01" value="${Number(c.amount)}" aria-label="Contribution amount"></div>
+        <div class="field"><input id="ce-date-${esc(c.id)}" name="date" type="date" value="${c.date}" aria-label="Contribution date"></div>
+        <button class="btn" type="submit">Save</button><button class="btn ghost" type="button" data-act="cancel-c-edit">Cancel</button>
+        <p class="form-msg" aria-live="polite"></p></form>`
+      :`<div class="c-row"><span class="when">${longDate(c.date)}</span><span class="amt">+${fmt(Number(c.amount))}</span><button class="icon-act" data-editc="${esc(c.id)}" aria-label="Edit contribution of ${fmt(Number(c.amount))}">${ICON.edit}</button><button class="del" data-delc="${esc(c.id)}" aria-label="Delete contribution of ${fmt(Number(c.amount))}">${ICON.trash}</button></div>`).join("")}</div>${cs.length>4?`<p class="goal-note">${cs.length-4} earlier ${cs.length-4===1?"contribution":"contributions"} not shown.</p>`:""}`:`<p class="goal-note">No contributions yet. Log the first one above.</p>`}
+      <div class="goal-actions">${confirming?`<span>Delete this goal and its ${cs.length} ${cs.length===1?"contribution":"contributions"}?</span><button class="link danger" data-delg="${esc(g.id)}">Delete</button><button class="link" data-act="cancel-g">Cancel</button>`:`<button class="link" data-editg="${esc(g.id)}">Edit goal</button><button class="link danger" data-askg="${esc(g.id)}">Delete goal</button>`}</div>
     </article>`;
   };
   return `<div class="head"><div><div class="eyebrow">Plan ahead</div><h1>Savings goals</h1></div></div>
@@ -686,17 +906,21 @@ function viewGoals(){
 }
 
 /* ---------- render & events ---------- */
-function render(){
+// fresh: switching a form between adding and editing, so don't carry over what was typed before.
+function render(fresh){
   const v=document.getElementById("view");
+  v.classList.remove("enter"); // the fade-in plays only when switching sections (route adds it back after this)
   const focusId=document.activeElement&&document.activeElement.id;
-  const keep={};v.querySelectorAll("form.entry input,form.entry select,form.contrib input").forEach(el=>{if(el.id)keep[el.id]=el.value});
-  v.innerHTML=state.view==="income"?viewEntries("income"):state.view==="expenses"?viewEntries("expense"):state.view==="budget"?viewBudget():state.view==="goals"?viewGoals():viewDashboard();
+  const keep={};
+  if(!fresh)v.querySelectorAll("form.entry input:not([type=checkbox]),form.entry select,form.contrib input,form.goal-edit input,form.c-edit input,form.rule-edit input,form.rule-edit select").forEach(el=>{if(el.id)keep[el.id]=el.value});
+  v.innerHTML=state.view==="income"?viewEntries("income"):state.view==="expenses"?viewEntries("expense"):state.view==="budget"?viewBudget():state.view==="goals"?viewGoals():state.view==="backup"?viewBackup():viewDashboard();
   Object.entries(keep).forEach(([id,val])=>{const el=document.getElementById(id);if(el&&el.name!=="date"||el&&val)el.value=val});
   if(focusId){const el=document.getElementById(focusId);if(el&&el.tagName!=="BUTTON")el.focus()}
-  document.querySelectorAll(".nav a").forEach(a=>{if(a.dataset.view===state.view)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
+  document.querySelectorAll(".nav a,.rail-link").forEach(a=>{if(a.dataset.view===state.view)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
   document.getElementById("currency").value=state.currency;
 }
-function route(){const h=location.hash.replace("#","");state.view=["dashboard","income","expenses","budget","goals"].includes(h)?h:"dashboard";render();window.scrollTo(0,0);const w=document.getElementById("view");w.classList.remove("enter");void w.offsetWidth;w.classList.add("enter");clearTimeout(route._t);route._t=setTimeout(()=>w.classList.remove("enter"),600)}
+function route(){const h=location.hash.replace("#","");state.view=["dashboard","income","expenses","budget","goals","backup"].includes(h)?h:"dashboard";
+  state.editing=state.editGoal=state.editContrib=state.editRule=state.confirmRule=state.restore=null;render(true);window.scrollTo(0,0);const w=document.getElementById("view");w.classList.remove("enter");void w.offsetWidth;w.classList.add("enter");clearTimeout(route._t);route._t=setTimeout(()=>w.classList.remove("enter"),600)}
 window.addEventListener("hashchange",route);
 
 const view=document.getElementById("view");
@@ -705,6 +929,44 @@ view.addEventListener("click",async ev=>{
   if(b.dataset.act==="prev"){state.month=shiftMonth(state.month,-1);render()}
   else if(b.dataset.act==="next"){state.month=shiftMonth(state.month,1);render()}
   else if(b.dataset.go){location.hash=b.dataset.go}
+  // editing income and expenses
+  else if(b.dataset.edit){
+    const e=state.entries.find(x=>x.id===b.dataset.edit);if(!e)return;
+    state.editing=e.id;render(true);
+    const panel=document.getElementById(e.type+"-form-panel");
+    if(panel){const r=panel.getBoundingClientRect();if(r.top<0||r.top>innerHeight*.6)panel.scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth",block:"start"})}
+    document.getElementById(e.type+"-desc")?.focus({preventScroll:true});
+  }
+  else if(b.dataset.act==="cancel-edit"){state.editing=null;render(true)}
+  // repeating items
+  else if(b.dataset.addrule){const r=state.recurring.find(x=>x.id===b.dataset.addrule);if(r){await store.add(entryFromRule(r,state.month));toast((r.type==="income"?"Income":"Expense")+" added: "+r.desc)}}
+  else if(b.dataset.skiprule){const r=state.recurring.find(x=>x.id===b.dataset.skiprule);if(r){await store.putDoc("recurring",{...r,skipped:[...(r.skipped||[]),state.month]});toast("Skipped "+r.desc+" for "+monthLabel(state.month).split(" ")[0])}}
+  else if(b.dataset.act==="add-all-due"){
+    const due=dueRules(b.dataset.type||null);
+    state.entries=state.entries.concat(due.map(r=>entryFromRule(r,state.month)));saveLocal();render();
+    toast(plural(due.length,"repeating item")+" added");
+  }
+  else if(b.dataset.editrule){state.editRule=b.dataset.editrule;state.confirmRule=null;render();document.getElementById("re-desc-"+b.dataset.editrule)?.focus()}
+  else if(b.dataset.act==="cancel-rule"){state.editRule=null;render()}
+  else if(b.dataset.askrule){state.confirmRule=b.dataset.askrule;state.editRule=null;render()}
+  else if(b.dataset.act==="cancel-stop"){state.confirmRule=null;render()}
+  else if(b.dataset.stoprule){const r=state.recurring.find(x=>x.id===b.dataset.stoprule);state.confirmRule=null;await store.dropDoc("recurring",b.dataset.stoprule);if(r)toast("Stopped repeating "+r.desc)}
+  // editing goals and contributions
+  else if(b.dataset.editg){state.editGoal=b.dataset.editg;state.confirmGoal=null;render();document.getElementById("ge-name-"+b.dataset.editg)?.focus()}
+  else if(b.dataset.act==="cancel-goal-edit"){state.editGoal=null;render()}
+  else if(b.dataset.editc){state.editContrib=b.dataset.editc;render();document.getElementById("ce-amt-"+b.dataset.editc)?.focus()}
+  else if(b.dataset.act==="cancel-c-edit"){state.editContrib=null;render()}
+  // backup and restore
+  else if(b.dataset.act==="download-backup"){downloadBackup()}
+  else if(b.dataset.act==="snooze-backup"){state.meta.snoozeUntil=Date.now()+7*864e5;saveLocal();render();toast("We'll remind you again in a week")}
+  else if(b.dataset.act==="restore-cancel"){state.restore=null;render()}
+  else if(b.dataset.act==="restore-confirm"){
+    const r=state.restore;if(!r||!r.data)return;
+    const before={entries:state.entries,goals:state.goals,contribs:state.contribs,recurring:state.recurring,budgets:state.budgets,currency:state.currency};
+    Object.assign(state,r.data);
+    if(!saveLocal(true)){Object.assign(state,before);state.restore={...r};render();toast("Couldn't restore: this device's storage is full.");return}
+    state.restore=null;toast("Backup restored: "+plural(state.entries.length,"entry","entries"));location.hash="dashboard";render(true);
+  }
   else if(b.dataset.askg){state.confirmGoal=b.dataset.askg;render()}
   else if(b.dataset.act==="cancel-g"){state.confirmGoal=null;render()}
   else if(b.dataset.delg){
@@ -712,10 +974,11 @@ view.addEventListener("click",async ev=>{
     try{for(const c of state.contribs.filter(c=>c.goalId===id))await store.dropDoc("contribs",c.id);await store.dropDoc("goals",id);render();toast("Goal deleted")}catch(e){toast("Couldn't delete that goal. Try again.")}
   }
   else if(b.dataset.delc){
+    if(state.editContrib===b.dataset.delc)state.editContrib=null;
     try{await store.dropDoc("contribs",b.dataset.delc);toast("Contribution deleted")}catch(e){toast("Couldn't delete that contribution. Try again.")}
   }
   else if(b.dataset.del){
-    const id=b.dataset.del;
+    const id=b.dataset.del;if(state.editing===id)state.editing=null;
     try{await store.remove(id);toast("Entry deleted")}catch(e){toast("Couldn't delete that entry. Try again.")}
   }
   else if(b.dataset.act==="clear-ex"){
@@ -730,7 +993,9 @@ view.addEventListener("click",async ev=>{
 });
 view.addEventListener("submit",async ev=>{
   ev.preventDefault();
-  if(ev.target.dataset.kind){submitGoalForm(ev.target);return}
+  const kind=ev.target.dataset.kind;
+  if(kind==="goal-edit"||kind==="contrib-edit"||kind==="rule-edit"){submitEditForm(ev.target);return}
+  if(kind){submitGoalForm(ev.target);return}
   const f=ev.target, msg=f.querySelector(".form-msg");
   const desc=f.desc.value.trim(), amount=Math.round(parseFloat(f.amount.value)*100)/100, date=f.date.value, category=f.category.value;
   let err="";
@@ -738,17 +1003,59 @@ view.addEventListener("submit",async ev=>{
   else if(!(amount>0))err="Enter an amount greater than zero.";
   else if(!/^\d{4}-\d{2}-\d{2}$/.test(date))err="Pick a date.";
   if(err){msg.textContent=err;msg.className="form-msg err";return}
+  if(f.dataset.edit){
+    const old=state.entries.find(e=>e.id===f.dataset.edit);
+    if(!old){state.editing=null;render(true);return}
+    const upd={...old,desc,amount,category,date,updatedAt:new Date().toISOString()};delete upd.example;
+    state.editing=null;
+    if(date.slice(0,7)!==state.month)state.month=date.slice(0,7);
+    await store.updateEntry(upd);render(true);
+    const m=document.querySelector("form.entry .form-msg");if(m){m.textContent="Changes saved: "+desc+", "+fmt(amount)+".";m.className="form-msg ok"}
+    return;
+  }
   const entry={id:uid(),type:f.dataset.type,desc,amount,category,date,createdAt:new Date().toISOString()};
+  const repeat=f.repeat&&f.repeat.checked;
+  if(repeat){
+    const rule={id:gid("r"),type:entry.type,desc,amount,category,day:Number(date.slice(8,10)),start:date.slice(0,7),skipped:[],createdAt:entry.createdAt};
+    state.recurring=state.recurring.concat([rule]);entry.recurringId=rule.id;
+  }
   try{
     await store.add(entry);
     f.desc.value="";f.amount.value="";
     const m=f.querySelector(".form-msg");
     if(date.slice(0,7)!==state.month){state.month=date.slice(0,7);render()}
     const m2=document.querySelector("form.entry .form-msg")||m;
-    m2.textContent=(entry.type==="income"?"Income":"Expense")+" added: "+desc+", "+fmt(amount)+".";m2.className="form-msg ok";
+    m2.textContent=(entry.type==="income"?"Income":"Expense")+" added: "+desc+", "+fmt(amount)+"."+(repeat?" It will repeat every month.":"");m2.className="form-msg ok";
     document.getElementById(entry.type+"-desc")?.focus();
   }catch(e){msg.textContent=e&&e.code==="quota_exceeded"?"Storage is full. Delete some old entries first.":"Couldn't save. Check your connection and try again.";msg.className="form-msg err"}
 });
+async function submitEditForm(f){
+  const kind=f.dataset.kind,id=f.dataset.id,msg=f.querySelector(".form-msg");
+  const fail=t=>{msg.textContent=t;msg.className="form-msg err"};
+  const money=v=>Math.round(parseFloat(v)*100)/100, now=new Date().toISOString();
+  const el=n=>f.elements.namedItem(n);
+  if(kind==="goal-edit"){
+    const g=state.goals.find(x=>x.id===id);if(!g)return;
+    const name=el("name").value.trim(),target=money(el("target").value),targetDate=el("targetDate").value;
+    if(!name)return fail("Enter a name for the goal.");
+    if(!(target>0))return fail("Enter a target amount greater than zero.");
+    const upd={...g,name,target,updatedAt:now};if(targetDate)upd.targetDate=targetDate;else delete upd.targetDate;
+    state.editGoal=null;await store.putDoc("goals",upd);toast("Goal updated");
+  }else if(kind==="contrib-edit"){
+    const c=state.contribs.find(x=>x.id===id);if(!c)return;
+    const amount=money(el("amount").value),date=el("date").value;
+    if(!(amount>0))return fail("Enter an amount greater than zero.");
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date))return fail("Pick a date.");
+    state.editContrib=null;await store.putDoc("contribs",{...c,amount,date,updatedAt:now});toast("Contribution updated");
+  }else if(kind==="rule-edit"){
+    const r=state.recurring.find(x=>x.id===id);if(!r)return;
+    const desc=el("desc").value.trim(),amount=money(el("amount").value),day=Number(el("day").value),category=el("category").value;
+    if(!desc)return fail("Enter a description.");
+    if(!(amount>0))return fail("Enter an amount greater than zero.");
+    if(!(Number.isInteger(day)&&day>=1&&day<=31))return fail("Enter a day of the month from 1 to 31.");
+    state.editRule=null;await store.putDoc("recurring",{...r,desc,amount,day,category,updatedAt:now});toast("Repeating item updated");
+  }
+}
 async function submitGoalForm(f){
   const kind=f.dataset.kind;
   const msg=kind==="goal"?f.querySelector(".form-msg"):document.getElementById("cmsg-"+f.dataset.goal);
@@ -774,8 +1081,15 @@ async function submitGoalForm(f){
   }catch(e){show(e&&e.code==="quota_exceeded"?"Storage is full. Delete some old entries first.":"Couldn't save. Check your connection and try again.")}
 }
 let budgetTimer=null;
-view.addEventListener("change",ev=>{
-  const inp=ev.target;if(!inp.dataset.cat)return;
+view.addEventListener("change",async ev=>{
+  const inp=ev.target;
+  if(inp.id==="restore-file"){
+    const file=inp.files&&inp.files[0];if(!file)return;
+    if(file.size>10*1024*1024){state.restore={error:"That file is too large to be a Monthly Ledger backup."};render();return}
+    let text="";try{text=await file.text()}catch(e){state.restore={error:"Couldn't read that file. Try choosing it again."};render();return}
+    state.restore=parseBackup(text);render();return;
+  }
+  if(!inp.dataset.cat)return;
   const v=Math.max(0,Math.round(parseFloat(inp.value)||0));
   if(v)state.budgets[inp.dataset.cat]=v;else delete state.budgets[inp.dataset.cat];
   clearTimeout(budgetTimer);
