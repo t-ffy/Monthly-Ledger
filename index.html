@@ -327,6 +327,27 @@ form.c-edit .form-msg{grid-column:1/-1}
 .rail-link:hover{background:var(--rail-hover);color:var(--rail-hi)}
 .rail-link[aria-current="page"]{background:var(--accent);color:var(--on-accent)}
 
+/* ---- categories ---- */
+.label-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.label-row .link{font-size:12.5px;font-weight:600}
+.newcat{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;margin-top:8px}
+.newcat .btn{padding:10px 14px;font-size:13.5px}
+.cat-intro{margin:0;color:var(--fg-2);max-width:70ch}
+form.cat-add{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:start}
+form.cat-add .form-msg{grid-column:1/-1}
+form.cat-add .form-msg:empty,form.cat-inline .form-msg:empty{display:none}
+.cat-list{display:flex;flex-direction:column}
+.cat-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 14px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.cat-row:first-child{border-top:0;padding-top:4px}
+.cat-row .name{font-weight:600;overflow-wrap:anywhere}
+.cat-row.is-hidden .name{color:var(--muted)}
+.cat-acts{display:flex;flex-wrap:wrap;gap:4px 14px;justify-content:flex-end}
+form.cat-inline{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px;border:1px solid var(--accent-line);border-radius:var(--radius-sm);background:var(--raised)}
+form.cat-inline .field{flex:1 1 200px}
+form.cat-inline .btn{padding:9px 16px;font-size:13.5px}
+form.cat-inline p{margin:0;flex-basis:100%;font-size:var(--t-small);color:var(--fg-2)}
+@media (max-width:560px){.cat-row{grid-template-columns:minmax(0,1fr)}.cat-acts{justify-content:flex-start}}
+
 /* ---- install offer ---- */
 .install-wrap{margin-bottom:20px}
 .install-banner .install-actions{display:flex;gap:8px;flex-wrap:wrap}
@@ -440,6 +461,7 @@ form.c-edit .form-msg{grid-column:1/-1}
     </nav>
     <div class="rail-foot">
       <a class="rail-link" href="#backup" data-view="backup"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 2.8 4 5v4.6c0 3.7 2.6 6.4 6 7.6 3.4-1.2 6-3.9 6-7.6V5z"/><path d="m7.4 10 1.8 1.8 3.5-3.6"/></svg>Backup &amp; restore</a>
+      <a class="rail-link" href="#categories" data-view="categories"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 4.5h5.2l7.8 7.8-4.2 4.2-7.8-7.8z"/><circle cx="7" cy="8" r="1"/></svg>Categories</a>
       <label for="currency">Currency</label>
       <select id="currency">
         <option value="USD">USD $</option><option value="EUR">EUR €</option><option value="GBP">GBP £</option>
@@ -471,12 +493,15 @@ form.c-edit .form-msg{grid-column:1/-1}
 
 <script>
 (function(){
-const INCOME_CATS=["Salary","Freelance","Business","Investments","Gifts","Refunds","Other"];
-const EXPENSE_CATS=["Housing","Groceries","Transport","Utilities","Dining out","Health","Entertainment","Shopping","Education","Savings","Other"];
+// Starting categories for a new device. People can add, rename, hide and merge them on the Categories page.
+const DEFAULT_CATS={
+  income:["Salary","Freelance","Business","Investments","Gifts","Refunds","Other"],
+  expense:["Housing","Groceries","Transport","Utilities","Dining out","Health","Entertainment","Shopping","Education","Savings","Other"]
+};
 const LOCAL_KEY="monthly-ledger-v1";
 
-const BACKUP_FORMAT=1;
-const state={mode:"loading",entries:[],goals:[],contribs:[],recurring:[],meta:{},editing:null,editGoal:null,editContrib:null,editRule:null,confirmRule:null,restore:null,confirmGoal:null,budgets:{},currency:"USD",month:monthKey(new Date()),view:"dashboard"};
+const BACKUP_FORMAT=2; // 2: categories have ids; entries, repeating items and budgets refer to them
+const state={mode:"loading",entries:[],goals:[],contribs:[],recurring:[],categories:[],catEdit:null,meta:{},editing:null,editGoal:null,editContrib:null,editRule:null,confirmRule:null,restore:null,confirmGoal:null,budgets:{},currency:"USD",month:monthKey(new Date()),view:"dashboard"};
 
 /* ---------- helpers ---------- */
 function monthKey(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")}
@@ -502,9 +527,49 @@ function exampleEntries(){
     ["expense","Bus pass",64,"Transport",2],["expense","Dinner with friends",58.9,"Dining out",7],["expense","Groceries top-up",61.1,"Groceries",10],
     ["expense","Gym membership",39,"Health",4],["expense","Streaming subscriptions",27.98,"Entertainment",6],["expense","Running shoes",118,"Shopping",12]
   ];
-  return rows.map(([type,desc,amount,category,day])=>({id:uid(),type,desc,amount,category,date:d(day),example:true}));
+  return rows.map(([type,desc,amount,cat,day])=>({id:uid(),type,desc,amount,categoryId:ensureCat(type,cat).id,date:d(day),example:true}));
 }
 const EXAMPLE_BUDGETS={Housing:1400,Groceries:400,Transport:120,Utilities:150,"Dining out":150,Health:60,Entertainment:50,Shopping:100};
+function exampleBudgets(){const b={};for(const [n,v] of Object.entries(EXAMPLE_BUDGETS))b[ensureCat("expense",n).id]=v;return b}
+
+/* ---------- categories ---------- */
+function catById(id){return state.categories.find(c=>c.id===id)}
+function catName(id){const c=catById(id);return c?c.name:"Uncategorised"}
+function catSort(a,b){const ao=a.name.toLowerCase()==="other",bo=b.name.toLowerCase()==="other";return ao!==bo?(ao?1:-1):a.name.localeCompare(b.name,undefined,{sensitivity:"base"})}
+function catsOf(type,all){return state.categories.filter(c=>c.type===type&&(all||!c.hidden)).sort(catSort)}
+function findCat(list,type,name){const n=name.trim().toLowerCase();return list.find(c=>c.type===type&&c.name.trim().toLowerCase()===n)}
+function ensureCat(type,name){let c=findCat(state.categories,type,name);if(!c){c={id:gid("k"),type,name,createdAt:new Date().toISOString()};state.categories.push(c)}return c}
+function catOptions(type,selId,withNew){
+  const list=catsOf(type);const sel=selId&&catById(selId);if(sel&&sel.hidden)list.push(sel);
+  return list.map(c=>`<option value="${esc(c.id)}"${c.id===selId?" selected":""}>${esc(c.name)}${c.hidden?" (hidden)":""}</option>`).join("")
+    +(withNew?`<option value="__new">+ New category…</option>`:"");
+}
+function catUsage(id){
+  return {entries:state.entries.filter(e=>e.categoryId===id).length,rules:state.recurring.filter(r=>r.categoryId===id).length,budget:!!state.budgets[id]};
+}
+function usageText(u){
+  const parts=[];if(u.entries)parts.push(plural(u.entries,"entry","entries"));if(u.rules)parts.push(plural(u.rules,"repeating item"));if(u.budget)parts.push("budget limit");
+  return parts.length?parts.join(" · "):"Not used yet";
+}
+function checkCatName(type,name,exceptId){
+  if(!name)return "Enter a name for the category.";
+  if(name.length>40)return "Keep the name to 40 characters or fewer.";
+  const dup=findCat(state.categories,type,name);if(dup&&dup.id!==exceptId)return `There's already ${type==="income"?"an income":"an expense"} category called ${dup.name}.`;
+  return "";
+}
+// Data saved before 1.4.0 stored category names. Give every category an id and point entries,
+// repeating items and budget limits at it. Data that already has categories passes through unchanged.
+function migrateData(d){
+  d.entries=d.entries||[];d.recurring=d.recurring||[];d.budgets=d.budgets||{};
+  if(Array.isArray(d.categories)&&d.categories.length)return d;
+  const cats=[],now=new Date().toISOString();
+  const add=(type,name)=>{name=String(name||"Other").trim()||"Other";let c=findCat(cats,type,name);if(!c){c={id:gid("k"),type,name,createdAt:now};cats.push(c)}return c};
+  for(const t of ["income","expense"])DEFAULT_CATS[t].forEach(n=>add(t,n));
+  d.entries=d.entries.map(e=>{if(e.categoryId)return e;const o={...e,categoryId:add(e.type,e.category).id};delete o.category;return o});
+  d.recurring=d.recurring.map(r=>{if(r.categoryId)return r;const o={...r,categoryId:add(r.type,r.category).id};delete o.category;return o});
+  const b={};for(const [k,v] of Object.entries(d.budgets))b[add("expense",k).id]=v;
+  d.budgets=b;d.categories=cats;return d;
+}
 
 /* ---------- storage ---------- */
 const store={
@@ -516,14 +581,15 @@ const store={
   async updateEntry(entry){state.entries=state.entries.map(e=>e.id===entry.id?entry:e);saveLocal();render()}
 };
 function saveLocal(silent){
-  try{localStorage.setItem(LOCAL_KEY,JSON.stringify({entries:state.entries,budgets:state.budgets,currency:state.currency,goals:state.goals,contribs:state.contribs,recurring:state.recurring,meta:state.meta}));return true}
+  try{localStorage.setItem(LOCAL_KEY,JSON.stringify({entries:state.entries,budgets:state.budgets,currency:state.currency,goals:state.goals,contribs:state.contribs,recurring:state.recurring,categories:state.categories,meta:state.meta}));return true}
   catch(e){if(!silent)toast("Couldn't save on this device. Its storage may be full.");return false}
 }
 function startLocal(reason){
   state.mode="local";
   let saved=null;try{saved=JSON.parse(localStorage.getItem(LOCAL_KEY)||"null")}catch(e){}
-  if(saved){state.entries=saved.entries||[];state.goals=saved.goals||[];state.contribs=saved.contribs||[];state.recurring=saved.recurring||[];state.meta=saved.meta||{};state.budgets=saved.budgets||{};state.currency=saved.currency||"USD"}
-  else{state.entries=[];state.budgets={};state.goals=[];state.contribs=[];state.recurring=[];state.meta={}} // new device: start with a clean slate
+  if(saved){state.entries=saved.entries||[];state.goals=saved.goals||[];state.contribs=saved.contribs||[];state.recurring=saved.recurring||[];state.categories=saved.categories||[];state.meta=saved.meta||{};state.budgets=saved.budgets||{};state.currency=saved.currency||"USD"}
+  else{state.entries=[];state.budgets={};state.goals=[];state.contribs=[];state.recurring=[];state.categories=[];state.meta={}} // new device: start with a clean slate
+  migrateData(state);
   if(!state.meta.firstUseAt)state.meta.firstUseAt=new Date().toISOString();
   saveLocal(true);
   setSync(true,reason||"Saved on this device");
@@ -557,7 +623,6 @@ const ICON={
 };
 
 function ordinal(n){const s=["th","st","nd","rd"],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0])}
-function catOptions(cats,sel){const list=!sel||cats.includes(sel)?cats:[...cats,sel];return list.map(c=>`<option${c===sel?" selected":""}>${esc(c)}</option>`).join("")}
 function plural(n,one,many){return n+" "+(n===1?one:(many||one+"s"))}
 function relDays(iso){const d=Math.floor((Date.now()-Date.parse(iso))/864e5);return d<=0?"today":d===1?"yesterday":d+" days ago"}
 function isIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1)}
@@ -569,13 +634,13 @@ function dueRules(type){
   return state.recurring.filter(r=>(!type||r.type===type)&&r.start<=state.month&&!(r.skipped||[]).includes(state.month)
     &&!state.entries.some(e=>e.recurringId===r.id&&e.date&&e.date.slice(0,7)===state.month)).sort((a,b)=>a.day-b.day);
 }
-function entryFromRule(r,month){return {id:uid(),type:r.type,desc:r.desc,amount:Number(r.amount),category:r.category,date:dueDate(r,month),recurringId:r.id,createdAt:new Date().toISOString()}}
+function entryFromRule(r,month){return {id:uid(),type:r.type,desc:r.desc,amount:Number(r.amount),categoryId:r.categoryId,date:dueDate(r,month),recurringId:r.id,createdAt:new Date().toISOString()}}
 function dueHTML(type){
   const due=dueRules(type);if(!due.length)return "";
   const name=monthLabel(state.month).split(" ")[0];
   return `<section class="panel due"><div class="panel-head"><h2>Repeating items for ${name}</h2><span class="hint">Add each with one tap, or skip it this month</span></div>
-    <div class="list">${due.map(r=>{const isIn=r.type==="income";return `<div class="row"><div class="badge ${isIn?"in":"out"}">${esc(initials(r.category))}</div>
-      <div class="what"><div class="desc">${esc(r.desc)}</div><div class="meta">${esc(r.category)} · due ${shortDate(dueDate(r,state.month))}</div></div>
+    <div class="list">${due.map(r=>{const isIn=r.type==="income";return `<div class="row"><div class="badge ${isIn?"in":"out"}">${esc(initials(catName(r.categoryId)))}</div>
+      <div class="what"><div class="desc">${esc(r.desc)}</div><div class="meta">${esc(catName(r.categoryId))} · due ${shortDate(dueDate(r,state.month))}</div></div>
       <div class="money ${isIn?"in":""}">${isIn?"+":"−"}${fmt(Number(r.amount))}</div>
       <div class="row-acts"><button class="btn ghost" data-skiprule="${esc(r.id)}" aria-label="Skip ${esc(r.desc)} this month">Skip</button><button class="btn" data-addrule="${esc(r.id)}" aria-label="Add ${esc(r.desc)}">Add</button></div></div>`}).join("")}</div>
     ${due.length>1?`<div class="due-foot"><button class="btn" data-act="add-all-due" data-type="${type||""}">Add all ${due.length}</button></div>`:""}</section>`;
@@ -583,7 +648,6 @@ function dueHTML(type){
 function repeatRulesHTML(type){
   const rules=state.recurring.filter(r=>r.type===type).sort((a,b)=>a.day-b.day);
   if(!rules.length)return "";
-  const cats=type==="income"?INCOME_CATS:EXPENSE_CATS;
   return `<section class="panel"><div class="panel-head"><h2>Repeats every month</h2><span class="hint">${plural(rules.length,"item")}</span></div>
   <div class="rule-list">${rules.map(r=>{
     const id=esc(r.id);
@@ -591,13 +655,13 @@ function repeatRulesHTML(type){
       <div class="field"><label for="re-desc-${id}">Description</label><input id="re-desc-${id}" name="desc" maxlength="80" value="${esc(r.desc)}" autocomplete="off"></div>
       <div class="field"><label for="re-amt-${id}">Amount</label><div class="money-in"><span>${esc(symbol())}</span><input id="re-amt-${id}" name="amount" type="number" inputmode="decimal" min="0" step="0.01" value="${Number(r.amount)}"></div></div>
       <div class="field"><label for="re-day-${id}">Day of month</label><input id="re-day-${id}" name="day" type="number" inputmode="numeric" min="1" max="31" step="1" value="${r.day}"></div>
-      <div class="field" style="grid-column:1/-1"><label for="re-cat-${id}">Category</label><select id="re-cat-${id}" name="category">${catOptions(cats,r.category)}</select></div>
+      <div class="field" style="grid-column:1/-1"><label for="re-cat-${id}">Category</label><select id="re-cat-${id}" name="category">${catOptions(type,r.categoryId)}</select></div>
       <p class="hint">Changes apply to months you haven't added yet. Entries already added stay as they are.</p>
       <div class="form-actions"><button class="btn" type="submit">Save</button><button class="btn ghost" type="button" data-act="cancel-rule">Cancel</button></div>
       <p class="form-msg" aria-live="polite"></p>
     </form>`;
     const confirming=state.confirmRule===r.id;
-    return `<div class="rule-row"><div class="what"><div class="desc">${esc(r.desc)}</div><div class="meta">${esc(r.category)} · ${ordinal(r.day)} of each month · since ${monthLabel(r.start)}</div></div>
+    return `<div class="rule-row"><div class="what"><div class="desc">${esc(r.desc)}</div><div class="meta">${esc(catName(r.categoryId))} · ${ordinal(r.day)} of each month · since ${monthLabel(r.start)}</div></div>
       <div class="money">${fmt(Number(r.amount))}</div>
       <div class="rule-acts">${confirming?`<span class="hint">Stop repeating this? Entries already added stay.</span><button class="link danger" data-stoprule="${id}">Stop repeating</button><button class="link" data-act="cancel-stop">Cancel</button>`
         :`<button class="link" data-editrule="${id}">Edit</button><button class="link danger" data-askrule="${id}">Stop repeating</button>`}</div></div>`;
@@ -606,7 +670,7 @@ function repeatRulesHTML(type){
 
 /* backup & restore */
 function backupPayload(){return {app:"monthly-ledger",format:BACKUP_FORMAT,exportedAt:new Date().toISOString(),
-  data:{entries:state.entries,budgets:state.budgets,currency:state.currency,goals:state.goals,contribs:state.contribs,recurring:state.recurring}}}
+  data:{categories:state.categories,entries:state.entries,budgets:state.budgets,currency:state.currency,goals:state.goals,contribs:state.contribs,recurring:state.recurring}}}
 async function downloadBackup(){
   const name="monthly-ledger-backup-"+todayISO()+".json";
   const blob=new Blob([JSON.stringify(backupPayload(),null,2)],{type:"application/json"});
@@ -629,17 +693,24 @@ function parseBackup(text){
   const isDate=v=>typeof v==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(v), isMonth=v=>typeof v==="string"&&/^\d{4}-\d{2}$/.test(v);
   const amt=v=>typeof v==="number"&&isFinite(v)&&v>0, str=(v,max)=>typeof v==="string"&&v.trim()!==""&&v.length<=max;
   const keep=(arr,ok)=>{if(!Array.isArray(arr))return [];const out=arr.filter(x=>x&&typeof x==="object"&&ok(x));skipped+=arr.length-out.length;return out};
-  const entries=keep(d.entries,e=>str(e.id,100)&&(e.type==="income"||e.type==="expense")&&str(e.desc,200)&&amt(e.amount)&&str(e.category,60)&&isDate(e.date));
+  // Format 1 backups name categories; format 2 backups refer to category ids.
+  const v2=Number(j.format)>=2;
+  const categories=v2?keep(d.categories,c=>str(c.id,100)&&str(c.name,40)&&(c.type==="income"||c.type==="expense")).map(c=>({id:c.id,type:c.type,name:c.name.trim(),hidden:!!c.hidden,createdAt:c.createdAt})):null;
+  if(v2&&!categories.length)return bad;
+  const catOk=(id,type)=>categories.some(c=>c.id===id&&c.type===type);
+  const catField=x=>v2?catOk(x.categoryId,x.type):str(x.category,60);
+  const entries=keep(d.entries,e=>str(e.id,100)&&(e.type==="income"||e.type==="expense")&&str(e.desc,200)&&amt(e.amount)&&catField(e)&&isDate(e.date));
   const goals=keep(d.goals,g=>str(g.id,100)&&str(g.name,120)&&amt(g.target)&&(g.targetDate==null||isDate(g.targetDate)));
   const goalIds=new Set(goals.map(g=>g.id));
   const contribs=keep(d.contribs,c=>str(c.id,100)&&goalIds.has(c.goalId)&&amt(c.amount)&&isDate(c.date));
-  const recurring=keep(d.recurring,r=>str(r.id,100)&&(r.type==="income"||r.type==="expense")&&str(r.desc,200)&&amt(r.amount)&&str(r.category,60)&&Number.isInteger(r.day)&&r.day>=1&&r.day<=31&&isMonth(r.start))
+  const recurring=keep(d.recurring,r=>str(r.id,100)&&(r.type==="income"||r.type==="expense")&&str(r.desc,200)&&amt(r.amount)&&catField(r)&&Number.isInteger(r.day)&&r.day>=1&&r.day<=31&&isMonth(r.start))
     .map(r=>({...r,skipped:Array.isArray(r.skipped)?r.skipped.filter(isMonth):[]}));
   const budgets={};
-  if(d.budgets&&typeof d.budgets==="object")for(const [k,v] of Object.entries(d.budgets)){if(k.length<=60&&amt(v))budgets[k]=v;else skipped++}
+  if(d.budgets&&typeof d.budgets==="object")for(const [k,v] of Object.entries(d.budgets)){if((v2?catOk(k,"expense"):k.length<=60)&&amt(v))budgets[k]=v;else skipped++}
   const known=[...document.getElementById("currency").options].map(o=>o.value);
   const currency=known.includes(d.currency)?d.currency:state.currency;
-  return {data:{entries,goals,contribs,recurring,budgets,currency},exportedAt:typeof j.exportedAt==="string"?j.exportedAt:null,skipped};
+  const data=migrateData({categories,entries,goals,contribs,recurring,budgets,currency});
+  return {data,exportedAt:typeof j.exportedAt==="string"?j.exportedAt:null,skipped};
 }
 function dataSummary(d){
   const parts=[plural(d.entries.length,"entry","entries"),plural(d.goals.length,"savings goal"),plural(d.contribs.length,"contribution"),plural(d.recurring.length,"repeating item")];
@@ -712,7 +783,8 @@ function budgetStatus(spent,limit){
   if(pct>=.8)return {cls:"warn",label:"Near limit · "+fmt(limit-spent)+" left",pct};
   return {cls:"ok",label:fmt(limit-spent)+" left",pct};
 }
-function spentBy(){const m={};state.entries.filter(e=>e.type==="expense"&&inMonth(e)).forEach(e=>m[e.category]=(m[e.category]||0)+Number(e.amount));return m}
+function spentBy(){const m={};state.entries.filter(e=>e.type==="expense"&&inMonth(e)).forEach(e=>m[e.categoryId]=(m[e.categoryId]||0)+Number(e.amount));return m}
+function budgetIds(){return Object.keys(state.budgets).filter(id=>catById(id))}
 
 function viewDashboard(){
   const month=state.entries.filter(inMonth);
@@ -733,7 +805,7 @@ function viewDashboard(){
   <section class="grid2">
     <div class="panel"><div class="panel-head"><h2>Spending by category</h2><span class="hint">${cats.length} categories</span></div>
       ${cats.length?`<div class="bars">${cats.map(([c,v])=>{const lim=state.budgets[c];const st=budgetStatus(v,lim);
-        return `<div class="bar-row"><span>${esc(c)}${st&&st.cls!=="ok"?`<span class="pill ${st.cls}">${st.cls==="over"?"Over budget":"Near limit"}</span>`:""}</span><span class="amt"><b>${fmt(v)}</b>${lim?" / "+fmt(lim):""}</span>
+        return `<div class="bar-row"><span>${esc(catName(c))}${st&&st.cls!=="ok"?`<span class="pill ${st.cls}">${st.cls==="over"?"Over budget":"Near limit"}</span>`:""}</span><span class="amt"><b>${fmt(v)}</b>${lim?" / "+fmt(lim):""}</span>
         <div class="track"><div class="fill ${st?st.cls==="ok"?"":st.cls:""}" style="width:${Math.max(2,(lim?Math.min(v/lim,1):v/max)*100)}%"></div></div></div>`}).join("")}</div>`
       :emptyState("chart","No spending yet",`Expenses you record for ${monthLabel(state.month)} will be grouped by category here.`,["expenses","Add an expense"])}
       ${budgeted.length?"":`<button class="link" data-go="budget">Set monthly limits →</button>`}
@@ -757,16 +829,16 @@ function insightsHTML(month,inc,exp,net,by){
   const pts=[];
   if(cats.length){
     const [top,val]=cats[0];
-    pts.push(["info",`<b>${esc(top)}</b> is your highest spending category at ${fmt(val)}, ${Math.round(val/exp*100)}% of all spending this month.`+(cats[1]?` Next is ${esc(cats[1][0])} at ${fmt(cats[1][1])}.`:"")]);
+    pts.push(["info",`<b>${esc(catName(top))}</b> is your highest spending category at ${fmt(val)}, ${Math.round(val/exp*100)}% of all spending this month.`+(cats[1]?` Next is ${esc(catName(cats[1][0]))} at ${fmt(cats[1][1])}.`:"")]);
     const big=month.filter(e=>e.type==="expense").sort((a,b)=>b.amount-a.amount)[0];
     if(big&&cats.length>1)pts.push(["info",`Your largest single expense was ${esc(big.desc)} (${fmt(Number(big.amount))}) on ${shortDate(big.date)}.`]);
   }else pts.push(["info",`No expenses recorded for ${name} yet.`]);
-  const over=EXPENSE_CATS.filter(c=>state.budgets[c]&&(by[c]||0)>state.budgets[c]);
-  const near=EXPENSE_CATS.filter(c=>state.budgets[c]&&(by[c]||0)<=state.budgets[c]&&(by[c]||0)>=state.budgets[c]*.8);
+  const over=budgetIds().filter(c=>(by[c]||0)>state.budgets[c]);
+  const near=budgetIds().filter(c=>(by[c]||0)<=state.budgets[c]&&(by[c]||0)>=state.budgets[c]*.8);
   const list=a=>a.length===1?a[0]:a.slice(0,-1).join(", ")+" and "+a[a.length-1];
-  if(over.length)pts.push(["over",`Over budget in ${list(over.map(c=>`<b>${esc(c)}</b> (by ${fmt(by[c]-state.budgets[c])})`))}.`]);
-  if(near.length)pts.push(["warn",`${list(near.map(c=>`<b>${esc(c)}</b>`))} ${near.length===1?"has":"have"} used 80% or more of ${near.length===1?"its":"their"} limit.`]);
-  if(!over.length&&!near.length&&Object.keys(state.budgets).length)pts.push(["ok",`Every budgeted category is under 80% of its limit.`]);
+  if(over.length)pts.push(["over",`Over budget in ${list(over.map(c=>`<b>${esc(catName(c))}</b> (by ${fmt(by[c]-state.budgets[c])})`))}.`]);
+  if(near.length)pts.push(["warn",`${list(near.map(c=>`<b>${esc(catName(c))}</b>`))} ${near.length===1?"has":"have"} used 80% or more of ${near.length===1?"its":"their"} limit.`]);
+  if(!over.length&&!near.length&&budgetIds().length)pts.push(["ok",`Every budgeted category is under 80% of its limit.`]);
   const prev=state.entries.filter(e=>e.type==="expense"&&e.date&&e.date.slice(0,7)===shiftMonth(state.month,-1));
   if(prev.length&&exp>0){const p=sum(prev);const d=Math.round((exp-p)/p*100);
     pts.push(["info",d===0?`Spending is level with ${monthLabel(shiftMonth(state.month,-1)).split(" ")[0]}.`:`Spending is ${Math.abs(d)}% ${d>0?"higher":"lower"} than ${monthLabel(shiftMonth(state.month,-1)).split(" ")[0]} (${fmt(p)}).`])}
@@ -775,14 +847,13 @@ function insightsHTML(month,inc,exp,net,by){
 }
 function rowHTML(e){
   const isIn=e.type==="income";
-  return `<div class="row"><div class="badge ${isIn?"in":"out"}">${esc(initials(e.category))}</div>
-    <div class="what"><div class="desc">${esc(e.desc)}</div><div class="meta">${esc(e.category)} · ${shortDate(e.date)}${e.example?'<span class="pill ex">Example</span>':""}</div></div>
+  return `<div class="row"><div class="badge ${isIn?"in":"out"}">${esc(initials(catName(e.categoryId)))}</div>
+    <div class="what"><div class="desc">${esc(e.desc)}</div><div class="meta">${esc(catName(e.categoryId))} · ${shortDate(e.date)}${e.example?'<span class="pill ex">Example</span>':""}</div></div>
     <div class="money ${isIn?"in":""}">${isIn?"+":"−"}${fmt(Number(e.amount))}</div></div>`;
 }
 
 function viewEntries(type){
   const isIn=type==="income", word=isIn?"income":"expense";
-  const cats=isIn?INCOME_CATS:EXPENSE_CATS;
   const list=state.entries.filter(e=>e.type===type&&inMonth(e)).sort((a,b)=>b.date.localeCompare(a.date));
   const total=sum(list);
   const ed=state.editing?state.entries.find(e=>e.id===state.editing&&e.type===type):null;
@@ -796,7 +867,8 @@ function viewEntries(type){
           <div class="field"><label for="${type}-amount">Amount</label><div class="money-in"><span>${esc(symbol())}</span><input id="${type}-amount" name="amount" type="number" inputmode="decimal" min="0" step="0.01" placeholder="0.00" value="${ed?Number(ed.amount):""}"></div></div>
           <div class="field"><label for="${type}-date">Date</label><input id="${type}-date" name="date" type="date" value="${def}"></div>
         </div>
-        <div class="field"><label for="${type}-cat">Category</label><select id="${type}-cat" name="category">${catOptions(cats,ed?ed.category:"")}</select></div>
+        <div class="field"><div class="label-row"><label for="${type}-cat">Category</label><a class="link" href="#categories">Manage</a></div><select id="${type}-cat" name="category">${catOptions(type,ed?ed.categoryId:"",true)}</select>
+          <div class="newcat" id="${type}-newcat-row" hidden><input id="${type}-newcat-name" maxlength="40" placeholder="New ${word} category" autocomplete="off" aria-label="New ${word} category name"><button class="btn ghost" type="button" data-act="quick-cat" data-type="${type}">Add category</button></div></div>
         ${ed?(ed.recurringId?`<p class="hint">This entry comes from a monthly repeat. Changes here apply to this entry only.</p>`:"")
           :`<label class="check" for="${type}-repeat"><input type="checkbox" id="${type}-repeat" name="repeat"><span>Repeat every month<small>It will be ready to add with one tap each month.</small></span></label>`}
         <div class="form-actions">${ed?`<button class="btn" type="submit">Save changes</button><button class="btn ghost" type="button" data-act="cancel-edit">Cancel</button>`:`<button class="btn" type="submit">Add ${word}</button>`}</div>
@@ -805,7 +877,7 @@ function viewEntries(type){
     </div>
     <div class="panel"><div class="panel-head"><h2>${monthLabel(state.month)}</h2><span class="hint">${plural(list.length,"entry","entries")}</span></div>
       ${list.length?`<div class="table-wrap"><table><thead><tr><th>Date</th><th>Description</th><th>Category</th><th class="amt">Amount</th><th><span hidden>Actions</span></th></tr></thead><tbody>
-      ${list.map(e=>`<tr${ed&&ed.id===e.id?' class="editing"':""}><td class="date">${shortDate(e.date)}</td><td class="desc">${esc(e.desc)}${e.recurringId?'<span class="pill rep">Monthly</span>':""}${e.example?'<span class="pill ex">Example</span>':""}</td><td><span class="cat">${esc(e.category)}</span></td><td class="amt">${fmt(Number(e.amount))}</td>
+      ${list.map(e=>`<tr${ed&&ed.id===e.id?' class="editing"':""}><td class="date">${shortDate(e.date)}</td><td class="desc">${esc(e.desc)}${e.recurringId?'<span class="pill rep">Monthly</span>':""}${e.example?'<span class="pill ex">Example</span>':""}</td><td><span class="cat">${esc(catName(e.categoryId))}</span></td><td class="amt">${fmt(Number(e.amount))}</td>
         <td class="acts"><div class="acts-in"><button class="icon-act" data-edit="${esc(e.id)}" aria-label="Edit ${esc(e.desc)}">${ICON.edit}</button><button class="del" data-del="${esc(e.id)}" aria-label="Delete ${esc(e.desc)}">${ICON.trash}</button></div></td></tr>`).join("")}
       </tbody><tfoot><tr><td colspan="3">Total</td><td class="amt">${fmt(total)}</td><td></td></tr></tfoot></table></div>`
       :emptyState(isIn?"inbox":"outbox",`No ${isIn?"income":"expenses"} in ${monthLabel(state.month)}`,`Use the form to record your first ${word} for this month. It will be listed here with a running total.`)}
@@ -815,9 +887,11 @@ function viewEntries(type){
 
 function viewBudget(){
   const by=spentBy();
-  const totalLimit=EXPENSE_CATS.reduce((a,c)=>a+(Number(state.budgets[c])||0),0);
-  const totalSpent=EXPENSE_CATS.reduce((a,c)=>a+(by[c]||0),0);
-  const over=EXPENSE_CATS.filter(c=>state.budgets[c]&&(by[c]||0)>state.budgets[c]).length;
+  // Visible expense categories, plus hidden ones that still have a limit or spending this month.
+  const cats=state.categories.filter(c=>c.type==="expense"&&(!c.hidden||state.budgets[c.id]||by[c.id])).sort(catSort);
+  const totalLimit=cats.reduce((a,c)=>a+(Number(state.budgets[c.id])||0),0);
+  const totalSpent=Object.values(by).reduce((a,v)=>a+v,0);
+  const over=budgetIds().filter(c=>(by[c]||0)>state.budgets[c]).length;
   return header("Plan","Budget")+banner()+`
   <section class="panel">
     <div class="totals">
@@ -826,15 +900,57 @@ function viewBudget(){
       <div>Categories over limit<b style="color:${over?"var(--bad)":"var(--fg)"}">${over}</b></div>
     </div>
   </section>
-  <section class="panel"><div class="panel-head"><h2>Monthly spending limits</h2><span class="hint">Limits repeat every month. Leave blank for no limit.</span></div>
+  <section class="panel"><div class="panel-head"><h2>Monthly spending limits</h2><span class="hint">Limits repeat every month. Leave blank for no limit. <a class="link" href="#categories">Manage categories</a></span></div>
     ${Object.values(state.budgets).some(v=>v>0)?"":emptyState("gauge","No limits set yet","Type a monthly amount next to any category below. A progress bar appears as soon as a limit is set.",null,true)}
     <div class="legend"><span><i class="sw ok"></i>Under 80%</span><span><i class="sw warn"></i>80% or more</span><span><i class="sw over"></i>Over limit</span></div>
-    <div class="budget-list">${EXPENSE_CATS.map((c,i)=>{const lim=Number(state.budgets[c])||0;const sp=by[c]||0;const st=budgetStatus(sp,lim);
-      return `<div class="b-row"><div class="b-name"><i class="sw ${st?st.cls:"none"}" aria-hidden="true"></i>${c}<small>${sp?fmt(sp)+" spent":"Nothing spent"}</small></div>
-      <div class="b-limit"><span>${esc(symbol())}</span><input id="limit-${i}" data-cat="${c}" type="number" inputmode="decimal" min="0" step="1" placeholder="No limit" value="${lim||""}" aria-label="${c} monthly limit"></div>
-      <div class="b-prog">${lim?`<div class="line"><span><b>${Math.round(st.pct*100)}%</b> · ${fmt(sp)} of ${fmt(lim)}</span><span class="pill ${st.cls}">${st.cls==="over"?"● ":st.cls==="warn"?"▲ ":""}${st.label}</span></div><div class="track" role="progressbar" aria-label="${c} spending" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(Math.min(st.pct,1)*100)}"><div class="fill ${st.cls==="ok"?"ok":st.cls}" style="width:${Math.max(sp?2:0,Math.min(st.pct,1)*100)}%"></div></div>`:`<div class="line"><span>No limit set</span></div><div class="track"></div>`}</div></div>`}).join("")}
+    <div class="budget-list">${cats.map((k,i)=>{const c=k.id,nm=esc(k.name);const lim=Number(state.budgets[c])||0;const sp=by[c]||0;const st=budgetStatus(sp,lim);
+      return `<div class="b-row"><div class="b-name"><i class="sw ${st?st.cls:"none"}" aria-hidden="true"></i>${nm}${k.hidden?'<span class="pill ex">Hidden</span>':""}<small>${sp?fmt(sp)+" spent":"Nothing spent"}</small></div>
+      <div class="b-limit"><span>${esc(symbol())}</span><input id="limit-${i}" data-cat="${esc(c)}" type="number" inputmode="decimal" min="0" step="1" placeholder="No limit" value="${lim||""}" aria-label="${nm} monthly limit"></div>
+      <div class="b-prog">${lim?`<div class="line"><span><b>${Math.round(st.pct*100)}%</b> · ${fmt(sp)} of ${fmt(lim)}</span><span class="pill ${st.cls}">${st.cls==="over"?"● ":st.cls==="warn"?"▲ ":""}${st.label}</span></div><div class="track" role="progressbar" aria-label="${nm} spending" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(Math.min(st.pct,1)*100)}"><div class="fill ${st.cls==="ok"?"ok":st.cls}" style="width:${Math.max(sp?2:0,Math.min(st.pct,1)*100)}%"></div></div>`:`<div class="line"><span>No limit set</span></div><div class="track"></div>`}</div></div>`}).join("")}
     </div>
   </section>`;
+}
+
+function viewCategories(){
+  const panel=type=>{
+    const word=type==="income"?"income":"expense";
+    const list=catsOf(type,true);
+    return `<div class="panel"><div class="panel-head"><h2>${type==="income"?"Income":"Expense"} categories</h2><span class="hint">${plural(list.filter(c=>!c.hidden).length,"in use","in use")}${list.some(c=>c.hidden)?" · "+list.filter(c=>c.hidden).length+" hidden":""}</span></div>
+      <form class="cat-add" data-kind="cat-add" data-type="${type}" novalidate>
+        <div class="field"><label for="newcat-${type}">New ${word} category</label><input id="newcat-${type}" name="name" maxlength="40" placeholder="${type==="income"?"e.g. Side business":"e.g. Pets"}" autocomplete="off"></div>
+        <button class="btn" type="submit" style="margin-top:26px">Add</button>
+        <p class="form-msg" aria-live="polite"></p>
+      </form>
+      <div class="cat-list">${list.map(c=>catRow(c,type)).join("")}</div></div>`;
+  };
+  return `<div class="head"><div><div class="eyebrow">Organise</div><h1>Categories</h1></div></div>
+  <p class="cat-intro">Add your own categories, rename them, hide the ones you don't use, or merge two into one. Changes apply everywhere, including past entries, repeating items and budget limits.</p>
+  <section class="grid2">${panel("expense")}${panel("income")}</section>`;
+}
+function catRow(c,type){
+  const u=catUsage(c.id),used=u.entries||u.rules||u.budget,id=esc(c.id),ed=state.catEdit&&state.catEdit.id===c.id?state.catEdit.mode:null;
+  const visible=catsOf(type).length;
+  let inline="";
+  if(ed==="rename")inline=`<form class="cat-inline" data-kind="cat-rename" data-id="${id}" novalidate>
+      <div class="field"><input id="cr-${id}" name="name" maxlength="40" value="${esc(c.name)}" aria-label="New name for ${esc(c.name)}" autocomplete="off"></div>
+      <button class="btn" type="submit">Save</button><button class="btn ghost" type="button" data-act="cat-cancel">Cancel</button>
+      <p class="form-msg" aria-live="polite"></p></form>`;
+  else if(ed==="merge"){
+    const targets=catsOf(type,true).filter(x=>x.id!==c.id);
+    inline=targets.length?`<form class="cat-inline" data-kind="cat-merge" data-id="${id}" novalidate>
+      <p>Move everything in <b>${esc(c.name)}</b> (${usageText(u).toLowerCase()}) into another category, then remove ${esc(c.name)}. Budget limits are added together.</p>
+      <div class="field"><select id="cm-${id}" name="target" aria-label="Merge ${esc(c.name)} into">${targets.map(t=>`<option value="${esc(t.id)}">${esc(t.name)}${t.hidden?" (hidden)":""}</option>`).join("")}</select></div>
+      <button class="btn" type="submit">Merge</button><button class="btn ghost" type="button" data-act="cat-cancel">Cancel</button>
+      <p class="form-msg" aria-live="polite"></p></form>`:`<form class="cat-inline"><p>There's no other ${type} category to merge into.</p><button class="btn ghost" type="button" data-act="cat-cancel">OK</button></form>`;
+  }
+  else if(ed==="delete")inline=`<form class="cat-inline"><p>Delete <b>${esc(c.name)}</b>? It isn't used anywhere.</p><button class="btn danger" type="button" data-catdel="${id}">Delete</button><button class="btn ghost" type="button" data-act="cat-cancel">Cancel</button></form>`;
+  const lastVisible=!c.hidden&&visible<=1;
+  const acts=`<button class="link" data-catrename="${id}">Rename</button>
+    ${c.hidden?`<button class="link" data-catshow="${id}">Show</button>`:lastVisible?"":`<button class="link" data-cathide="${id}">Hide</button>`}
+    <button class="link" data-catmerge="${id}">Merge</button>
+    ${used||lastVisible?"":`<button class="link danger" data-catask="${id}">Delete</button>`}`;
+  return `<div class="cat-row${c.hidden?" is-hidden":""}"><div><div class="name">${esc(c.name)}${c.hidden?'<span class="pill ex">Hidden</span>':""}</div><div class="meta">${usageText(u)}</div></div>
+    <div class="cat-acts">${ed?"":acts}</div>${inline}</div>`;
 }
 
 function longDate(iso){const [y,m,d]=iso.split("-").map(Number);return new Date(y,m-1,d).toLocaleDateString(undefined,{month:"short",day:"numeric",year:"numeric"})}
@@ -912,15 +1028,16 @@ function render(fresh){
   v.classList.remove("enter"); // the fade-in plays only when switching sections (route adds it back after this)
   const focusId=document.activeElement&&document.activeElement.id;
   const keep={};
-  if(!fresh)v.querySelectorAll("form.entry input:not([type=checkbox]),form.entry select,form.contrib input,form.goal-edit input,form.c-edit input,form.rule-edit input,form.rule-edit select").forEach(el=>{if(el.id)keep[el.id]=el.value});
-  v.innerHTML=state.view==="income"?viewEntries("income"):state.view==="expenses"?viewEntries("expense"):state.view==="budget"?viewBudget():state.view==="goals"?viewGoals():state.view==="backup"?viewBackup():viewDashboard();
+  if(!fresh)v.querySelectorAll("form.entry input:not([type=checkbox]),form.entry select,form.contrib input,form.cat-add input,form.cat-inline input,form.goal-edit input,form.c-edit input,form.rule-edit input,form.rule-edit select").forEach(el=>{if(el.id)keep[el.id]=el.value});
+  v.innerHTML=state.view==="income"?viewEntries("income"):state.view==="expenses"?viewEntries("expense"):state.view==="budget"?viewBudget():state.view==="goals"?viewGoals():state.view==="backup"?viewBackup():state.view==="categories"?viewCategories():viewDashboard();
   Object.entries(keep).forEach(([id,val])=>{const el=document.getElementById(id);if(el&&el.name!=="date"||el&&val)el.value=val});
+  v.querySelectorAll("form.entry select[name=category]").forEach(sel=>{const row=document.getElementById(sel.form.dataset.type+"-newcat-row");if(row)row.hidden=sel.value!=="__new"});
   if(focusId){const el=document.getElementById(focusId);if(el&&el.tagName!=="BUTTON")el.focus()}
   document.querySelectorAll(".nav a,.rail-link").forEach(a=>{if(a.dataset.view===state.view)a.setAttribute("aria-current","page");else a.removeAttribute("aria-current")});
   document.getElementById("currency").value=state.currency;
 }
-function route(){const h=location.hash.replace("#","");state.view=["dashboard","income","expenses","budget","goals","backup"].includes(h)?h:"dashboard";
-  state.editing=state.editGoal=state.editContrib=state.editRule=state.confirmRule=state.restore=null;render(true);window.scrollTo(0,0);const w=document.getElementById("view");w.classList.remove("enter");void w.offsetWidth;w.classList.add("enter");clearTimeout(route._t);route._t=setTimeout(()=>w.classList.remove("enter"),600)}
+function route(){const h=location.hash.replace("#","");state.view=["dashboard","income","expenses","budget","goals","backup","categories"].includes(h)?h:"dashboard";
+  state.editing=state.editGoal=state.editContrib=state.editRule=state.confirmRule=state.restore=state.catEdit=null;render(true);window.scrollTo(0,0);const w=document.getElementById("view");w.classList.remove("enter");void w.offsetWidth;w.classList.add("enter");clearTimeout(route._t);route._t=setTimeout(()=>w.classList.remove("enter"),600)}
 window.addEventListener("hashchange",route);
 
 const view=document.getElementById("view");
@@ -956,13 +1073,37 @@ view.addEventListener("click",async ev=>{
   else if(b.dataset.act==="cancel-goal-edit"){state.editGoal=null;render()}
   else if(b.dataset.editc){state.editContrib=b.dataset.editc;render();document.getElementById("ce-amt-"+b.dataset.editc)?.focus()}
   else if(b.dataset.act==="cancel-c-edit"){state.editContrib=null;render()}
+  // categories
+  else if(b.dataset.act==="quick-cat"){
+    const type=b.dataset.type,inp=document.getElementById(type+"-newcat-name"),name=(inp&&inp.value||"").trim();
+    const form=b.closest("form"),msg=form.querySelector(".form-msg");
+    const err=checkCatName(type,name);if(err){msg.textContent=err;msg.className="form-msg err";inp&&inp.focus();return}
+    const c={id:gid("k"),type,name,createdAt:new Date().toISOString()};state.categories.push(c);saveLocal();
+    render();const sel=document.getElementById(type+"-cat");if(sel){sel.value=c.id;sel.dispatchEvent(new Event("change",{bubbles:true}))}
+    const row=document.getElementById(type+"-newcat-name");if(row)row.value="";
+    const m=document.querySelector(`form.entry[data-type="${type}"] .form-msg`);if(m){m.textContent="Category added: "+name+".";m.className="form-msg ok"}
+  }
+  else if(b.dataset.catrename){state.catEdit={id:b.dataset.catrename,mode:"rename"};render();const i=document.getElementById("cr-"+b.dataset.catrename);if(i){i.focus();i.select()}}
+  else if(b.dataset.catmerge){state.catEdit={id:b.dataset.catmerge,mode:"merge"};render()}
+  else if(b.dataset.catask){state.catEdit={id:b.dataset.catask,mode:"delete"};render()}
+  else if(b.dataset.act==="cat-cancel"){state.catEdit=null;render()}
+  else if(b.dataset.cathide||b.dataset.catshow){
+    const c=catById(b.dataset.cathide||b.dataset.catshow);if(!c)return;
+    if(b.dataset.cathide&&catsOf(c.type).length<=1){toast("Keep at least one category visible");return}
+    c.hidden=!!b.dataset.cathide;saveLocal();render();toast(c.hidden?c.name+" is hidden. Its history stays.":c.name+" is visible again");
+  }
+  else if(b.dataset.catdel){
+    const c=catById(b.dataset.catdel),u=c&&catUsage(c.id);if(!c)return;
+    if(u.entries||u.rules||u.budget){toast("That category is in use. Merge or hide it instead.");return}
+    state.categories=state.categories.filter(x=>x.id!==c.id);state.catEdit=null;saveLocal();render();toast("Deleted "+c.name);
+  }
   // backup and restore
   else if(b.dataset.act==="download-backup"){downloadBackup()}
   else if(b.dataset.act==="snooze-backup"){state.meta.snoozeUntil=Date.now()+7*864e5;saveLocal();render();toast("We'll remind you again in a week")}
   else if(b.dataset.act==="restore-cancel"){state.restore=null;render()}
   else if(b.dataset.act==="restore-confirm"){
     const r=state.restore;if(!r||!r.data)return;
-    const before={entries:state.entries,goals:state.goals,contribs:state.contribs,recurring:state.recurring,budgets:state.budgets,currency:state.currency};
+    const before={entries:state.entries,goals:state.goals,contribs:state.contribs,recurring:state.recurring,budgets:state.budgets,currency:state.currency,categories:state.categories};
     Object.assign(state,r.data);
     if(!saveLocal(true)){Object.assign(state,before);state.restore={...r};render();toast("Couldn't restore: this device's storage is full.");return}
     state.restore=null;toast("Backup restored: "+plural(state.entries.length,"entry","entries"));location.hash="dashboard";render(true);
@@ -987,7 +1128,7 @@ view.addEventListener("click",async ev=>{
   }
   else if(b.dataset.act==="load-ex"){
     try{for(const e of exampleEntries())await store.add(e);
-      if(!Object.keys(state.budgets).length){state.budgets={...EXAMPLE_BUDGETS};await store.saveSettings()}
+      if(!Object.keys(state.budgets).length){state.budgets=exampleBudgets();await store.saveSettings()}
       toast("Sample month loaded")}catch(e){toast("Couldn't load the sample. Try again.")}
   }
 });
@@ -995,28 +1136,31 @@ view.addEventListener("submit",async ev=>{
   ev.preventDefault();
   const kind=ev.target.dataset.kind;
   if(kind==="goal-edit"||kind==="contrib-edit"||kind==="rule-edit"){submitEditForm(ev.target);return}
+  if(kind==="cat-add"||kind==="cat-rename"||kind==="cat-merge"){submitCatForm(ev.target);return}
   if(kind){submitGoalForm(ev.target);return}
   const f=ev.target, msg=f.querySelector(".form-msg");
-  const desc=f.desc.value.trim(), amount=Math.round(parseFloat(f.amount.value)*100)/100, date=f.date.value, category=f.category.value;
+  const desc=f.desc.value.trim(), amount=Math.round(parseFloat(f.amount.value)*100)/100, date=f.date.value, categoryId=f.category.value;
   let err="";
   if(!desc)err="Enter a description.";
   else if(!(amount>0))err="Enter an amount greater than zero.";
   else if(!/^\d{4}-\d{2}-\d{2}$/.test(date))err="Pick a date.";
+  else if(categoryId==="__new")err="Add the new category first, or pick one from the list.";
+  else if(!catById(categoryId))err="Pick a category.";
   if(err){msg.textContent=err;msg.className="form-msg err";return}
   if(f.dataset.edit){
     const old=state.entries.find(e=>e.id===f.dataset.edit);
     if(!old){state.editing=null;render(true);return}
-    const upd={...old,desc,amount,category,date,updatedAt:new Date().toISOString()};delete upd.example;
+    const upd={...old,desc,amount,categoryId,date,updatedAt:new Date().toISOString()};delete upd.example;delete upd.category;
     state.editing=null;
     if(date.slice(0,7)!==state.month)state.month=date.slice(0,7);
     await store.updateEntry(upd);render(true);
     const m=document.querySelector("form.entry .form-msg");if(m){m.textContent="Changes saved: "+desc+", "+fmt(amount)+".";m.className="form-msg ok"}
     return;
   }
-  const entry={id:uid(),type:f.dataset.type,desc,amount,category,date,createdAt:new Date().toISOString()};
+  const entry={id:uid(),type:f.dataset.type,desc,amount,categoryId,date,createdAt:new Date().toISOString()};
   const repeat=f.repeat&&f.repeat.checked;
   if(repeat){
-    const rule={id:gid("r"),type:entry.type,desc,amount,category,day:Number(date.slice(8,10)),start:date.slice(0,7),skipped:[],createdAt:entry.createdAt};
+    const rule={id:gid("r"),type:entry.type,desc,amount,categoryId,day:Number(date.slice(8,10)),start:date.slice(0,7),skipped:[],createdAt:entry.createdAt};
     state.recurring=state.recurring.concat([rule]);entry.recurringId=rule.id;
   }
   try{
@@ -1049,11 +1193,36 @@ async function submitEditForm(f){
     state.editContrib=null;await store.putDoc("contribs",{...c,amount,date,updatedAt:now});toast("Contribution updated");
   }else if(kind==="rule-edit"){
     const r=state.recurring.find(x=>x.id===id);if(!r)return;
-    const desc=el("desc").value.trim(),amount=money(el("amount").value),day=Number(el("day").value),category=el("category").value;
+    const desc=el("desc").value.trim(),amount=money(el("amount").value),day=Number(el("day").value),categoryId=el("category").value;
     if(!desc)return fail("Enter a description.");
     if(!(amount>0))return fail("Enter an amount greater than zero.");
     if(!(Number.isInteger(day)&&day>=1&&day<=31))return fail("Enter a day of the month from 1 to 31.");
-    state.editRule=null;await store.putDoc("recurring",{...r,desc,amount,day,category,updatedAt:now});toast("Repeating item updated");
+    state.editRule=null;await store.putDoc("recurring",{...r,desc,amount,day,categoryId,updatedAt:now});toast("Repeating item updated");
+  }
+}
+function submitCatForm(f){
+  const kind=f.dataset.kind,msg=f.querySelector(".form-msg");
+  const fail=t=>{msg.textContent=t;msg.className="form-msg err"};
+  if(kind==="cat-add"){
+    const type=f.dataset.type,name=f.elements.namedItem("name").value.trim();
+    const err=checkCatName(type,name);if(err)return fail(err);
+    state.categories.push({id:gid("k"),type,name,createdAt:new Date().toISOString()});saveLocal();render(true);
+    const m=document.querySelector(`form.cat-add[data-type="${type}"] .form-msg`);if(m){m.textContent="Added "+name+".";m.className="form-msg ok"}
+    document.getElementById("newcat-"+type)?.focus();
+  }else if(kind==="cat-rename"){
+    const c=catById(f.dataset.id);if(!c)return;
+    const name=f.elements.namedItem("name").value.trim();
+    const err=checkCatName(c.type,name,c.id);if(err)return fail(err);
+    const old=c.name;c.name=name;state.catEdit=null;saveLocal();render();toast(old===name?"Name unchanged":"Renamed "+old+" to "+name);
+  }else if(kind==="cat-merge"){
+    const src=catById(f.dataset.id),dst=catById(f.elements.namedItem("target").value);
+    if(!src||!dst||src.id===dst.id||src.type!==dst.type)return fail("Pick a category to merge into.");
+    state.entries=state.entries.map(e=>e.categoryId===src.id?{...e,categoryId:dst.id}:e);
+    state.recurring=state.recurring.map(r=>r.categoryId===src.id?{...r,categoryId:dst.id}:r);
+    if(state.budgets[src.id]){state.budgets[dst.id]=(Number(state.budgets[dst.id])||0)+Number(state.budgets[src.id]);delete state.budgets[src.id]}
+    state.categories=state.categories.filter(c=>c.id!==src.id);
+    if(dst.hidden&&!catsOf(dst.type).length)dst.hidden=false;
+    state.catEdit=null;saveLocal();render();toast("Merged "+src.name+" into "+dst.name);
   }
 }
 async function submitGoalForm(f){
@@ -1089,6 +1258,11 @@ view.addEventListener("change",async ev=>{
     let text="";try{text=await file.text()}catch(e){state.restore={error:"Couldn't read that file. Try choosing it again."};render();return}
     state.restore=parseBackup(text);render();return;
   }
+  if(inp.name==="category"&&inp.form&&inp.form.classList.contains("entry")){
+    const row=document.getElementById(inp.form.dataset.type+"-newcat-row");
+    if(row){row.hidden=inp.value!=="__new";if(!row.hidden)row.querySelector("input").focus()}
+    return;
+  }
   if(!inp.dataset.cat)return;
   const v=Math.max(0,Math.round(parseFloat(inp.value)||0));
   if(v)state.budgets[inp.dataset.cat]=v;else delete state.budgets[inp.dataset.cat];
@@ -1096,7 +1270,12 @@ view.addEventListener("change",async ev=>{
   budgetTimer=setTimeout(async()=>{try{await store.saveSettings();toast("Budget saved")}catch(e){toast("Couldn't save the budget. Try again.")}},300);
   render();
 });
-view.addEventListener("keydown",ev=>{if(ev.key==="Enter"&&ev.target.dataset&&ev.target.dataset.cat)ev.target.blur()});
+view.addEventListener("keydown",ev=>{
+  if(ev.key!=="Enter")return;
+  if(ev.target.dataset&&ev.target.dataset.cat)ev.target.blur();
+  // Enter in the quick "new category" box adds the category instead of submitting the entry form.
+  if(ev.target.id&&ev.target.id.endsWith("-newcat-name")){ev.preventDefault();ev.target.closest(".newcat").querySelector("button").click()}
+});
 document.getElementById("currency").addEventListener("change",async ev=>{
   state.currency=ev.target.value;render();
   try{await store.saveSettings()}catch(e){toast("Couldn't save the currency.")}

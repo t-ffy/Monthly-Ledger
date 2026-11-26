@@ -9,6 +9,7 @@ A personal finance app that runs entirely in the browser. Track monthly income a
 - **Dashboard**: total income, total expenses and net balance for the month, plus a plain-language monthly summary, spending by category and recent activity.
 - **Income and Expenses**: add entries with a description, amount, category and date, browse them month by month, and edit or delete any entry.
 - **Repeating entries**: tick **Repeat every month** for salary, rent, subscriptions and bills. Each month they appear in a due list to add with one tap (or skip), and you can edit or stop a repeat at any time.
+- **Your own categories**: add, rename, hide or merge income and expense categories on the **Categories** page, or add one straight from the entry form with **+ New category**. Changes apply to past entries too.
 - **Budget**: set a monthly limit per expense category. Progress bars turn amber at 80% of the limit and red when you go over.
 - **Savings goals**: create named goals with a target amount and an optional target date, then log contributions and track the percentage saved and the amount remaining. Goals and contributions can be edited.
 - **Backup and restore**: download all your data as one file, and restore it on the same or a new device. The dashboard reminds you if you haven't backed up in 30 days.
